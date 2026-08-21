@@ -202,16 +202,38 @@
   .strip{
     display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
     padding-bottom:14px; scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
+    cursor:grab;
   }
+  .strip:active{cursor:grabbing;}
   .strip::-webkit-scrollbar{display:none;}
   .strip .plate{
     flex:0 0 auto;width:min(720px,68vw);height:min(420px,44vh);scroll-snap-align:center;
+    pointer-events:none; /* allow drag on the strip itself */
   }
   .strip-cap{
-    display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;
     font-size:11.5px;color:var(--ink-soft);padding-top:6px;border-top:1px solid var(--line);
   }
-  .strip-count{font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .strip-nav{
+    display:flex;align-items:center;gap:12px;flex-shrink:0;
+  }
+  .strip-btn{
+    width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
+    background:var(--paper);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    transition:background .25s ease,border-color .25s ease,color .25s ease;
+    cursor:pointer;
+  }
+  .strip-btn:hover:not(:disabled){
+    background:var(--ink);color:var(--paper);border-color:var(--ink);
+  }
+  .strip-btn:disabled{
+    opacity:.35;cursor:default;
+  }
+  .strip-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .strip-count{font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);font-variant-numeric:tabular-nums;min-width:4.2em;text-align:center;}
 
   /* credits block */
   .credits{
@@ -485,7 +507,15 @@ list.innerHTML = PROJECTS.map(p=>`
           <div class="strip" data-strip>${p.strip.map(s=>plate(s.icon,s.tone)).join('')}</div>
           <div class="strip-cap">
             <span data-cap>${p.strip[0].cap}</span>
-            <span class="strip-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
+            <div class="strip-nav">
+              <button type="button" class="strip-btn" data-prev aria-label="Previous image">
+                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span class="strip-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
+              <button type="button" class="strip-btn" data-next aria-label="Next image">
+                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
           </div>
         </div>
         <div class="credits">
@@ -552,22 +582,88 @@ projects.forEach(proj=>{
   });
   proj.querySelector('.proj-left').style.cursor='pointer';
 
-  // filmstrip caption sync
+  // filmstrip: caption sync + prev/next + drag-to-scroll
   const strip=proj.querySelector('[data-strip]');
   const cap=proj.querySelector('[data-cap]');
   const count=proj.querySelector('[data-count]');
+  const prevBtn=proj.querySelector('[data-prev]');
+  const nextBtn=proj.querySelector('[data-next]');
   const data=PROJECTS.find(p=>p.id===proj.id);
-  strip.addEventListener('scroll',()=>{
+  let stripIdx=0;
+
+  function currentStripIndex(){
     const plates=Array.from(strip.children);
+    if(!plates.length) return 0;
     const mid=strip.scrollLeft+strip.clientWidth/2;
     let idx=0,best=Infinity;
     plates.forEach((el,i)=>{
       const c=el.offsetLeft+el.offsetWidth/2;
       if(Math.abs(c-mid)<best){best=Math.abs(c-mid);idx=i;}
     });
+    return idx;
+  }
+
+  function updateStripUI(idx){
+    stripIdx=idx;
     cap.textContent=data.strip[idx].cap;
     count.textContent=`${String(idx+1).padStart(2,'0')} / ${String(data.strip.length).padStart(2,'0')}`;
+    if(prevBtn) prevBtn.disabled = idx<=0;
+    if(nextBtn) nextBtn.disabled = idx>=data.strip.length-1;
+  }
+
+  function goStrip(dir){
+    const plates=Array.from(strip.children);
+    if(!plates.length) return;
+    const next=Math.max(0,Math.min(plates.length-1,stripIdx+dir));
+    if(next===stripIdx) return;
+    plates[next].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    updateStripUI(next);
+  }
+
+  strip.addEventListener('scroll',()=>{
+    updateStripUI(currentStripIndex());
   },{passive:true});
+
+  if(prevBtn) prevBtn.addEventListener('click',e=>{e.stopPropagation();goStrip(-1);});
+  if(nextBtn) nextBtn.addEventListener('click',e=>{e.stopPropagation();goStrip(1);});
+
+  // drag-to-scroll on the filmstrip (desktop)
+  let drag=null;
+  strip.addEventListener('pointerdown',e=>{
+    if(e.button!==0) return;
+    drag={x:e.clientX, left:strip.scrollLeft, moved:false};
+    strip.setPointerCapture(e.pointerId);
+  });
+  strip.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    const dx=e.clientX-drag.x;
+    if(Math.abs(dx)>4) drag.moved=true;
+    strip.scrollLeft=drag.left-dx;
+  });
+  strip.addEventListener('pointerup',e=>{
+    if(!drag) return;
+    if(drag.moved){
+      // snap to nearest after drag
+      const idx=currentStripIndex();
+      const plates=Array.from(strip.children);
+      if(plates[idx]) plates[idx].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      updateStripUI(idx);
+    }
+    drag=null;
+  });
+  strip.addEventListener('pointercancel',()=>{drag=null;});
+  // prevent click after drag from bubbling
+  strip.addEventListener('click',e=>{if(drag&&drag.moved) e.stopPropagation();},{capture:true});
+
+  // horizontal wheel / trackpad on the strip
+  strip.addEventListener('wheel',e=>{
+    if(Math.abs(e.deltaX)>Math.abs(e.deltaY) || e.shiftKey){
+      e.preventDefault();
+      strip.scrollLeft+=(e.deltaX||e.deltaY);
+    }
+  },{passive:false});
+
+  updateStripUI(0);
 });
 
 /* ============ LAYOUT COLUMNS ============ */
