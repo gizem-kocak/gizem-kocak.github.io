@@ -165,6 +165,15 @@
     overflow:hidden; border-radius:2px;
   }
   .proj-crop .plate{ width:100%; height:100%; }
+  /* horizontal slides inside the main stage when open (BIG-style) */
+  .proj-slides{
+    display:flex; width:100%; height:100%;
+    transition:transform .55s cubic-bezier(.22,.85,.24,1);
+    will-change:transform;
+  }
+  .proj-slides .plate{
+    flex:0 0 100%; width:100%; height:100%;
+  }
   .proj-stage::after{
     content:'View project';
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
@@ -173,7 +182,48 @@
     transition:opacity .35s ease,transform .35s ease;
   }
   .proj-stage:hover::after{opacity:1;transform:translate(-50%,-50%) scale(1);}
-  .proj.open .proj-stage::after{content:'Close';}
+  .proj.open .proj-stage::after{content:'Close'; opacity:0;}
+  .proj.open .proj-stage:hover::after{opacity:0;}
+
+  /* left/right arrows over the main image */
+  .proj-nav{
+    position:absolute; inset:0; z-index:4;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 14px; pointer-events:none; opacity:0;
+    transition:opacity .3s ease;
+  }
+  .proj.open .proj-nav{opacity:1; pointer-events:auto;}
+  .proj-nav button{
+    width:40px; height:40px; border-radius:50%;
+    background:rgba(255,254,251,.92); border:1px solid var(--line);
+    color:var(--ink); display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 12px rgba(38,36,31,.08);
+    transition:background .25s ease, color .25s ease, border-color .25s ease, opacity .25s ease;
+    pointer-events:auto; cursor:pointer;
+  }
+  .proj-nav button:hover:not(:disabled){
+    background:var(--ink); color:var(--paper); border-color:var(--ink);
+  }
+  .proj-nav button:disabled{opacity:.3; cursor:default;}
+  .proj-nav button svg{
+    width:16px; height:16px; stroke:currentColor; fill:none;
+    stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+  }
+  .proj-caption{
+    position:absolute; left:0; right:0; bottom:0; z-index:3;
+    display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
+    padding:40px 16px 14px;
+    background:linear-gradient(transparent, rgba(38,36,31,.62));
+    color:#fff; font-size:12px; line-height:1.45;
+    opacity:0; pointer-events:none;
+    transition:opacity .35s ease;
+  }
+  .proj.open .proj-caption{opacity:1;}
+  .proj-caption .cap-text{max-width:72%;}
+  .proj-caption .cap-count{
+    font-size:10.5px; letter-spacing:.1em; opacity:.85;
+    font-variant-numeric:tabular-nums; flex-shrink:0;
+  }
 
   /* RIGHT column — description */
   .proj-right{
@@ -188,55 +238,19 @@
   }
   .proj-right p{font-size:13px;line-height:1.68;color:var(--ink-soft);margin:0 0 15px;}
 
-  /* EXPANDED lower content: filmstrip + credits */
+  /* EXPANDED lower content: credits only (images live in the main stage carousel) */
   .proj-expand{
     grid-column:1 / -1;
     max-height:0;overflow:hidden;
     transition:max-height .9s cubic-bezier(.22,.85,.24,1);
   }
-  .proj.open .proj-expand{max-height:2200px;}
-  .expand-inner{padding-top:64px;}
-
-  /* filmstrip with peek slivers */
-  .strip-wrap{position:relative;margin-bottom:20px;}
-  .strip{
-    display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
-    padding-bottom:14px; scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior-x:contain;
-    cursor:grab;
-  }
-  .strip:active{cursor:grabbing;}
-  .strip::-webkit-scrollbar{display:none;}
-  .strip .plate{
-    flex:0 0 auto;width:min(720px,68vw);height:min(420px,44vh);scroll-snap-align:center;
-    pointer-events:none;
-  }
-  .strip-cap{
-    display:flex;justify-content:space-between;align-items:center;gap:20px;
-    font-size:11.5px;color:var(--ink-soft);padding-top:6px;border-top:1px solid var(--line);
-  }
-  .strip-nav{
-    display:flex;align-items:center;gap:12px;flex-shrink:0;
-  }
-  .strip-btn{
-    width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
-    background:var(--paper);color:var(--ink);
-    display:flex;align-items:center;justify-content:center;
-    transition:background .25s ease,border-color .25s ease,color .25s ease;
-    cursor:pointer;
-  }
-  .strip-btn:hover:not(:disabled){
-    background:var(--ink);color:var(--paper);border-color:var(--ink);
-  }
-  .strip-btn:disabled{opacity:.35;cursor:default;}
-  .strip-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .strip-count{font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);font-variant-numeric:tabular-nums;min-width:4.2em;text-align:center;}
+  .proj.open .proj-expand{max-height:800px;}
+  .expand-inner{padding-top:48px;}
 
   /* credits block */
   .credits{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:30px;
-    margin-top:52px;padding-top:34px;border-top:1px solid var(--line);
+    padding-top:34px;border-top:1px solid var(--line);
   }
   .cred-l{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
   .cred-v{font-size:12.5px;line-height:1.75;}
@@ -291,7 +305,6 @@
     .proj-left{text-align:left;}
     .share-row{justify-content:flex-start;}
     .proj-stage .plate{height:44vh !important;}
-    .strip .plate{width:86vw;height:38vh;}
     .process-grid{grid-template-columns:1fr;}
     .about-grid{grid-template-columns:1fr;}
     .about-portrait{aspect-ratio:16/10;}
@@ -494,28 +507,29 @@ list.innerHTML = PROJECTS.map(p=>`
     </div>
 
     <div class="proj-stage" data-stage role="button" tabindex="0" aria-expanded="false" aria-controls="${p.id}-x">
-      <div class="proj-crop" data-crop>${plate(p.icon,p.tone)}</div>
+      <div class="proj-crop" data-crop>
+        <div class="proj-slides" data-slides>
+          ${p.strip.map(s=>plate(s.icon,s.tone)).join('')}
+        </div>
+      </div>
+      <div class="proj-nav" data-nav>
+        <button type="button" data-prev aria-label="Previous image">
+          <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" data-next aria-label="Next image">
+          <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="proj-caption" data-caption>
+        <span class="cap-text" data-cap>${p.strip[0].cap}</span>
+        <span class="cap-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
+      </div>
     </div>
 
     <div class="proj-right">${p.text.map(t=>`<p>${t}</p>`).join('')}</div>
 
     <div class="proj-expand" id="${p.id}-x">
       <div class="expand-inner">
-        <div class="strip-wrap">
-          <div class="strip" data-strip>${p.strip.map(s=>plate(s.icon,s.tone)).join('')}</div>
-          <div class="strip-cap">
-            <span data-cap>${p.strip[0].cap}</span>
-            <div class="strip-nav">
-              <button type="button" class="strip-btn" data-prev aria-label="Previous image">
-                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-              <span class="strip-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
-              <button type="button" class="strip-btn" data-next aria-label="Next image">
-                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            </div>
-          </div>
-        </div>
         <div class="credits">
           <div><div class="cred-l">University</div><div class="cred-v"><span>Mimar Sinan Fine Arts University</span><span>Faculty of Architecture, Istanbul</span></div></div>
           <div><div class="cred-l">Coursework Focus</div><div class="cred-v"><span>${p.focus}</span></div></div>
@@ -546,15 +560,6 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 /* ============ EXPAND / COLLAPSE IN PLACE ============ */
 const projects=Array.from(document.querySelectorAll('[data-proj]'));
 
-function closeOthers(except){
-  projects.forEach(p=>{
-    if(p!==except && p.classList.contains('open')){
-      p.classList.remove('open');
-      p.querySelector('[data-stage]').setAttribute('aria-expanded','false');
-    }
-  });
-}
-
 function centerInView(proj){
   // Scroll so the project sits in the vertical middle of the viewport.
   // Re-run a few times while the open height is still expanding so the
@@ -575,12 +580,6 @@ function centerInView(proj){
 }
 
 function toggle(proj){
-  const willOpen = !proj.classList.contains('open');
-
-  if(willOpen){
-    closeOthers(proj);
-  }
-
   const open = proj.classList.toggle('open');
   proj.querySelector('[data-stage]').setAttribute('aria-expanded', String(open));
   if(typeof applyColumns === 'function') applyColumns();
@@ -591,7 +590,6 @@ function toggle(proj){
 
   if(open){
     // Bring the opened project to the middle of the screen and let it grow.
-    // (No pin-to-click — centering is the intentional motion.)
     centerInView(proj);
   } else {
     // On close, keep it roughly where it is while it shrinks
@@ -610,7 +608,33 @@ function toggle(proj){
 
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
-  stage.addEventListener('click',()=>toggle(proj));
+  const slides=proj.querySelector('[data-slides]');
+  const prevBtn=proj.querySelector('[data-prev]');
+  const nextBtn=proj.querySelector('[data-next]');
+  const cap=proj.querySelector('[data-cap]');
+  const count=proj.querySelector('[data-count]');
+  const data=PROJECTS.find(p=>p.id===proj.id);
+  let slideIdx=0;
+
+  function setSlide(idx){
+    const n=data.strip.length;
+    slideIdx=Math.max(0,Math.min(n-1,idx));
+    if(slides) slides.style.transform=`translateX(${-slideIdx*100}%)`;
+    if(cap) cap.textContent=data.strip[slideIdx].cap;
+    if(count) count.textContent=`${String(slideIdx+1).padStart(2,'0')} / ${String(n).padStart(2,'0')}`;
+    if(prevBtn) prevBtn.disabled=slideIdx<=0;
+    if(nextBtn) nextBtn.disabled=slideIdx>=n-1;
+  }
+
+  function goSlide(dir){
+    setSlide(slideIdx+dir);
+  }
+
+  // open / close on stage click (ignore clicks on nav arrows)
+  stage.addEventListener('click',e=>{
+    if(e.target.closest('[data-nav]')) return;
+    toggle(proj);
+  });
   stage.addEventListener('keydown',e=>{
     if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(proj);}
   });
@@ -620,86 +644,28 @@ projects.forEach(proj=>{
   });
   proj.querySelector('.proj-left').style.cursor='pointer';
 
-  // filmstrip: caption sync + prev/next + drag-to-scroll
-  const strip=proj.querySelector('[data-strip]');
-  const cap=proj.querySelector('[data-cap]');
-  const count=proj.querySelector('[data-count]');
-  const prevBtn=proj.querySelector('[data-prev]');
-  const nextBtn=proj.querySelector('[data-next]');
-  const data=PROJECTS.find(p=>p.id===proj.id);
-  let stripIdx=0;
+  // left / right through images inside this project (BIG-style)
+  if(prevBtn) prevBtn.addEventListener('click',e=>{e.stopPropagation();goSlide(-1);});
+  if(nextBtn) nextBtn.addEventListener('click',e=>{e.stopPropagation();goSlide(1);});
 
-  function currentStripIndex(){
-    const plates=Array.from(strip.children);
-    if(!plates.length) return 0;
-    const mid=strip.scrollLeft+strip.clientWidth/2;
-    let idx=0,best=Infinity;
-    plates.forEach((el,i)=>{
-      const c=el.offsetLeft+el.offsetWidth/2;
-      if(Math.abs(c-mid)<best){best=Math.abs(c-mid);idx=i;}
-    });
-    return idx;
-  }
-
-  function updateStripUI(idx){
-    stripIdx=idx;
-    cap.textContent=data.strip[idx].cap;
-    count.textContent=`${String(idx+1).padStart(2,'0')} / ${String(data.strip.length).padStart(2,'0')}`;
-    if(prevBtn) prevBtn.disabled = idx<=0;
-    if(nextBtn) nextBtn.disabled = idx>=data.strip.length-1;
-  }
-
-  function goStrip(dir){
-    const plates=Array.from(strip.children);
-    if(!plates.length) return;
-    const next=Math.max(0,Math.min(plates.length-1,stripIdx+dir));
-    if(next===stripIdx) return;
-    plates[next].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-    updateStripUI(next);
-  }
-
-  strip.addEventListener('scroll',()=>{
-    updateStripUI(currentStripIndex());
+  // swipe on the stage when open
+  let tX=0,tY=0;
+  stage.addEventListener('touchstart',e=>{
+    tX=e.changedTouches[0].clientX; tY=e.changedTouches[0].clientY;
+  },{passive:true});
+  stage.addEventListener('touchend',e=>{
+    if(!proj.classList.contains('open')) return;
+    const dx=e.changedTouches[0].clientX-tX;
+    const dy=e.changedTouches[0].clientY-tY;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.4){
+      goSlide(dx<0?1:-1);
+    }
   },{passive:true});
 
-  if(prevBtn) prevBtn.addEventListener('click',e=>{e.stopPropagation();goStrip(-1);});
-  if(nextBtn) nextBtn.addEventListener('click',e=>{e.stopPropagation();goStrip(1);});
-
-  // drag-to-scroll on the filmstrip (desktop)
-  let drag=null;
-  strip.addEventListener('pointerdown',e=>{
-    if(e.button!==0) return;
-    drag={x:e.clientX, left:strip.scrollLeft, moved:false};
-    strip.setPointerCapture(e.pointerId);
-  });
-  strip.addEventListener('pointermove',e=>{
-    if(!drag) return;
-    const dx=e.clientX-drag.x;
-    if(Math.abs(dx)>4) drag.moved=true;
-    strip.scrollLeft=drag.left-dx;
-  });
-  strip.addEventListener('pointerup',e=>{
-    if(!drag) return;
-    if(drag.moved){
-      const idx=currentStripIndex();
-      const plates=Array.from(strip.children);
-      if(plates[idx]) plates[idx].scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-      updateStripUI(idx);
-    }
-    drag=null;
-  });
-  strip.addEventListener('pointercancel',()=>{drag=null;});
-  strip.addEventListener('click',e=>{if(drag&&drag.moved) e.stopPropagation();},{capture:true});
-
-  // horizontal wheel / trackpad on the strip
-  strip.addEventListener('wheel',e=>{
-    if(Math.abs(e.deltaX)>Math.abs(e.deltaY) || e.shiftKey){
-      e.preventDefault();
-      strip.scrollLeft+=(e.deltaX||e.deltaY);
-    }
-  },{passive:false});
-
-  updateStripUI(0);
+  setSlide(0);
+  // expose for keyboard handler
+  proj._goSlide=goSlide;
+  proj._setSlide=setSlide;
 });
 
 /* ============ LAYOUT COLUMNS ============ */
@@ -943,41 +909,25 @@ function holdAnchor(){
   if(performance.now() > anchorUntil){ anchorPending = false; anchorEl = null; }
 }
 
-/* ============ PREV / NEXT PROJECT ============
-   With a project open: Left/Right and swipe move between PROJECTS. */
-function openIndex(){ return projects.findIndex(p=>p.classList.contains('open')); }
-
-function goToProject(dir){
-  const cur = openIndex();
-  if(cur < 0) return false;
-  const next = (cur + dir + projects.length) % projects.length;
-  if(next === cur) return false;
-  // toggle closes current (if open) then opens next and centers it
-  if(projects[cur].classList.contains('open')) toggle(projects[cur]);
-  toggle(projects[next]);
-  return true;
-}
+/* ============ KEYBOARD: left/right = slides inside open project ============ */
+function openProjects(){ return projects.filter(p=>p.classList.contains('open')); }
 
 addEventListener('keydown', e=>{
-  if(openIndex() < 0) return;
-  if(e.key === 'ArrowRight' && goToProject(1))  e.preventDefault();
-  else if(e.key === 'ArrowLeft' && goToProject(-1)) e.preventDefault();
-  else if(e.key === 'Escape'){
-    const c = openIndex();
-    if(c >= 0) toggle(projects[c]);
+  const open = openProjects();
+  if(!open.length) return;
+
+  // Prefer the most recently opened / last in list that is open
+  const proj = open[open.length-1];
+
+  if(e.key === 'ArrowRight'){
+    if(proj._goSlide){ proj._goSlide(1); e.preventDefault(); }
+  } else if(e.key === 'ArrowLeft'){
+    if(proj._goSlide){ proj._goSlide(-1); e.preventDefault(); }
+  } else if(e.key === 'Escape'){
+    toggle(proj);
+    e.preventDefault();
   }
 });
-
-let tX = 0, tY = 0;
-addEventListener('touchstart', e=>{
-  tX = e.changedTouches[0].clientX; tY = e.changedTouches[0].clientY;
-}, {passive:true});
-addEventListener('touchend', e=>{
-  if(openIndex() < 0) return;
-  const dx = e.changedTouches[0].clientX - tX;
-  const dy = e.changedTouches[0].clientY - tY;
-  if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) goToProject(dx < 0 ? 1 : -1);
-}, {passive:true});
 
 document.getElementById('backTop').addEventListener('click',e=>{
   e.preventDefault(); scrollTo({top:0,behavior:'smooth'});
