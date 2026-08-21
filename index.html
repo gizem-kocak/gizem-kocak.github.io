@@ -1,3 +1,180 @@
+Skip to main content
+⌘K
+⌘J
+
+
+
+index.html
+Everything is very good now on the website but when I open a project I cant go left and right no the photos below the project main photo and description. Can yo fix it and show it here
+
+2m 43s saniye çalıştı
+Fixed. When a project is open, the filmstrip photos under the main image now support proper left/right navigation.
+
+What changed
+
+Prev / Next buttons
+Under the filmstrip you’ll see circular arrow buttons next to the counter (01 / 03).
+Click them to move one photo at a time
+Buttons disable at the first/last image
+Drag to scroll
+Click and drag horizontally on the filmstrip itself (cursor becomes a grab hand).
+Trackpad / wheel
+Horizontal trackpad gestures or Shift + mouse wheel also scroll the strip.
+Caption + counter stay in sync
+The description under the photos and the 01 / 03 counter update as you move.
+The updated file is here:
+
+
+Open a project, scroll down a little to the filmstrip, and use the arrows (or drag) to move between the photos.
+i want that the squeezing of the projects begins when we the part studio projects is placed at the top of our screen
+
+1m 39s saniye çalıştı
+Done. The project squeeze now only starts once the Studio Projects section reaches the top of the screen.
+
+How it works
+
+While you’re still above the Studio Projects block (hero, intro, etc.), every project stays at full scale — no compression, no drift.
+As soon as the “Studio Projects” heading hits the top of the viewport (just under the fixed header), the velocity-driven squeeze fades in over a short ~120px ramp.
+If you scroll back up past that point, the effect relaxes again.
+Updated file:
+
+Keep everything the same but I want that when I click on a project I want that it comes to middle of the screen and makes itself bigger.
+
+3m 39s saniye çalıştı
+Done. When you click a project it now:
+
+Closes any other open project
+Scrolls itself to the vertical middle of the screen
+Expands larger (taller image area)
+The centering re-adjusts a few times while the expand animation runs, so it finishes truly centered even as the height grows.
+
+Everything else stays the same:
+
+Squeeze only starts once Studio Projects hits the top
+Filmstrip left/right arrows + drag still work
+Keyboard arrows still switch between projects when one is open
+Updated file:
+
+
+
+i don't want that it closes other projects. when I click on the project I want the same here on the video. So I don't want separate photos below like before and I want this left right behaviour+
+2 / 2
+
+5m 42s saniye çalıştı
+Here’s what changed to match the BIG behaviour:
+
+Behaviour now
+
+Clicking a project expands it and scrolls it to the middle of the screen — other projects stay as they are (nothing auto-closes).
+No separate photo strip below — the images live inside the main project image area.
+Left / right navigation (like the video):
+Arrow buttons on the large image
+Keyboard ← → when a project is open
+Swipe left/right on the image (touch)
+Caption + counter update as you move through the project’s images.
+Escape closes the focused open project.
+Credits still appear under the expanded project; the old filmstrip is gone.
+
+Updated file:
+
+i want the left right animation as on the video it must move with the text not just the pictures
+
+4m 12s saniye çalıştı
+Done. Left/right now moves image and text together as full panels, like on the BIG site.
+
+How it works
+
+When a project is open:
+
+Each step is a panel with image + text side by side
+Left / right (arrows, keyboard, or swipe) slides the whole panel
+Even panels flip layout (text left / image right) for variety
+The left column (title, facts) stays fixed while content slides next to it
+No separate photo strip — everything lives in that horizontal track.
+
+Updated file:
+
+can you give some alternative designs without replacing the placement and scrolling and so on just the design. I want a archtiectural design. Tone The architecture aspect more now I cant see exactly what this website is about
+
+26s saniye çalıştı
+Here are three alternative design directions that keep the same layout, scrolling, open/close, and left–right behaviour — only the visual language changes so the site reads clearly as an interior architecture portfolio.
+
+1. Blueprint / Technical
+
+Tone: Drawing board, construction documents, precision.
+
+Background: cool off-white / light grey (#F2F1EC)
+Lines: thin hairline grid or subtle construction lines
+Type: tighter, more technical (e.g. Inter + a mono for labels like “01 / PLAN”)
+Accents: single ink colour (deep charcoal) + one technical blue or muted green
+Project “plates”: look more like plan/section diagrams than soft moodboards
+Labels: “Interior Architecture · Istanbul”, “Studio 2022–2026”, room tags, scale cues
+Feels like: a carefully drafted portfolio sheet, not a lifestyle brand.
+
+2. Material / Tactile
+
+Tone: Stone, timber, plaster, light — the materials of interiors.
+
+Background: warm plaster (#F7F4EF)
+Surfaces: soft grain or subtle noise, not flat colour
+Type: quieter serif for titles (Fraunces or similar), clean sans for body
+Palette: oak, limestone, soft sage, charcoal — used as material blocks, not decoration
+Project images: framed like material samples / model photos
+Stronger hierarchy: “Interior Architecture” and project type (Residential / Hospitality…) always visible
+Feels like: a material library and a set of built spaces, not a generic studio site.
+
+3. Gallery / Exhibition
+
+Tone: Museum wall, focused on the work.
+
+Background: near-white or very light grey
+Almost no decoration; heavy reliance on whitespace
+Type: larger project titles, smaller meta (year, program, location)
+Navigation and chrome very quiet; the open project is the “exhibition”
+Darker ink, minimal colour; one restrained accent only when needed
+Clear statement under the name: e.g. “Interior architecture — concept to construction detail”
+Feels like: walking a gallery of projects rather than browsing a website.
+
+What stays the same in all three
+
+Placement of header, hero, work list, approach, about, contact
+Scroll behaviour and squeeze
+Click to open → centre + enlarge
+Left/right panels (image + text together)
+Structure and content
+Only colour, type, labels, framing, and surface treatment change.
+
+Recommendation:
+For a graduate interior architecture portfolio, 2 (Material / Tactile) or a blend of 2 + 1 (material warmth + clear technical labels) usually reads most clearly as “this is about space, materials, and making.”
+
+Which direction do you want applied — 1, 2, 3, or a blend (e.g. Material base + Blueprint labels)? I can implement it on the current file without touching the interaction logic.
+do first the first one
+
+5m 33s saniye çalıştı
+Blueprint / Technical is applied. Interaction and layout are unchanged — only the visual system.
+
+What changed
+
+Palette: Cool off-white, charcoal, technical blue-green accent (no warm sage/oak)
+Type: Newsreader for titles + IBM Plex Mono for labels, nav, facts, captions (drawing-sheet feel)
+Mark: Square, mono “GK” instead of a circle
+Hero: Fine construction grid instead of soft colour washes
+Plates: Cool diagram-paper surfaces with hairline borders
+Labels: Clearer architecture framing — “Interior Architecture”, “Portfolio 01–06”, “01 · Note”, “02 · Method”, “Selected Work”
+Corners: Sharper (1px) for a more technical look
+Updated file:
+
+
+If you want, we can push it further (stronger grid, section numbers on every block, or plan-style plate icons).
+
+
+index.html
+
+Geniş
+
+Mobil
+
+Kaynak
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,14 +183,22 @@
 <title>Gizem Koçak — Interior Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,340;9..144,440&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F6F5F0; --bg-soft:#EFEDE6;
-    --ink:#26241F; --ink-soft:#6B675D; --ink-faint:#9B968A;
-    --sage:#8E9A75; --sage-deep:#6E7A57; --oak:#C9AD85;
-    --line:#DBD7CB; --paper:#FFFEFB;
+    /* Blueprint / technical drawing palette */
+    --bg:#F1F0EB;
+    --bg-soft:#E8E7E1;
+    --ink:#1A1A18;
+    --ink-soft:#5C5B55;
+    --ink-faint:#8A8983;
+    --accent:#3D5A5B;
+    --accent-deep:#2A3F40;
+    --grid:#D4D3CC;
+    --line:#C8C7C0;
+    --paper:#FFFEFB;
     --edge: clamp(20px, 4vw, 56px);
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -26,13 +211,16 @@
     font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
     overflow-x:hidden;
   }
-  h1,h2,h3{ font-family:'Fraunces',serif; font-weight:440; letter-spacing:-.01em; margin:0; }
+  h1,h2,h3{ font-family:'Newsreader',Georgia,serif; font-weight:400; letter-spacing:-.015em; margin:0; }
   a{color:inherit;text-decoration:none;}
   img,svg{display:block;max-width:100%;}
   button{font:inherit;background:none;border:none;color:inherit;cursor:pointer;}
-  .label{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; }
-  ::selection{background:var(--sage);color:var(--paper);}
-  a:focus-visible,button:focus-visible{outline:2px solid var(--sage-deep);outline-offset:4px;}
+  .label{
+    font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--ink-soft); font-weight:500;
+  }
+  ::selection{background:var(--accent);color:var(--paper);}
+  a:focus-visible,button:focus-visible{outline:1.5px solid var(--accent);outline-offset:3px;}
   #smoothWrap{ position:fixed; top:0; left:0; width:100%; will-change:transform; }
 
   /* ---------- NAV ---------- */
@@ -44,20 +232,22 @@
   }
   header.scrolled{
     padding:13px var(--edge);
-    background:rgba(246,245,240,.88);backdrop-filter:blur(10px);
+    background:rgba(241,240,235,.92);backdrop-filter:blur(10px);
     box-shadow:0 1px 0 var(--line);
   }
   .brand{display:flex;align-items:center;gap:11px;}
-  .mark{width:32px;height:32px;border-radius:50%;border:1px solid var(--ink);
+  .mark{
+    width:30px;height:30px;border-radius:1px;border:1px solid var(--ink);
     display:flex;align-items:center;justify-content:center;
-    font-family:'Fraunces',serif;font-size:12px;flex-shrink:0;}
-  .brand-name{font-size:13px;letter-spacing:.06em;font-weight:500;}
+    font-family:var(--mono);font-size:10px;letter-spacing:.04em;font-weight:500;flex-shrink:0;
+  }
+  .brand-name{font-size:12px;letter-spacing:.1em;font-weight:500;font-family:var(--mono);text-transform:uppercase;}
   nav.links{display:flex;gap:36px;}
-  nav.links a{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;position:relative;padding-bottom:3px;}
+  nav.links a{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;position:relative;padding-bottom:3px;}
   nav.links a::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--ink);
     transform:scaleX(0);transform-origin:right;transition:transform .35s ease;}
   nav.links a:hover::after{transform:scaleX(1);transform-origin:left;}
-  .ticker{font-size:11px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase;
+  .ticker{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase;
     display:flex;align-items:center;gap:8px;min-width:150px;justify-content:flex-end;}
   .ticker-word{transition:opacity .4s ease;}
 
@@ -65,22 +255,26 @@
   .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;
     padding:0 var(--edge) 80px;overflow:hidden;}
   .hero-wash{position:absolute;inset:0;z-index:-1;
-    background:radial-gradient(ellipse 60% 50% at 78% 18%,rgba(201,173,133,.28),transparent 60%),
-      radial-gradient(ellipse 70% 60% at 15% 85%,rgba(142,154,117,.18),transparent 65%),
-      linear-gradient(180deg,#FBFAF6 0%,var(--bg) 55%,var(--bg-soft) 100%);}
-  .hero-rays{position:absolute;inset:0;z-index:-1;opacity:.5;mix-blend-mode:overlay;
-    background-image:repeating-linear-gradient(115deg,transparent 0 68px,rgba(255,255,255,.55) 68px 70px);}
+    background:
+      linear-gradient(180deg,#F7F6F2 0%,var(--bg) 50%,var(--bg-soft) 100%);}
+  /* fine construction grid */
+  .hero-rays{position:absolute;inset:0;z-index:-1;opacity:.55;pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:48px 48px;
+    mask-image:linear-gradient(180deg,#000 0%,transparent 72%);}
   .hero-top{display:flex;justify-content:space-between;align-items:flex-start;padding-top:130px;margin-bottom:auto;}
   .hero-index{text-align:right;}
-  .hero-name{font-size:clamp(58px,11vw,148px);line-height:.94;letter-spacing:-.02em;font-weight:340;}
-  .hero-name em{font-style:italic;font-weight:300;color:var(--sage-deep);}
+  .hero-name{font-size:clamp(58px,11vw,148px);line-height:.94;letter-spacing:-.02em;font-weight:300;}
+  .hero-name em{font-style:italic;font-weight:300;color:var(--accent);}
   .hero-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-top:36px;}
-  .hero-tagline{max-width:380px;font-size:15.5px;line-height:1.6;color:var(--ink-soft);}
+  .hero-tagline{max-width:400px;font-size:15px;line-height:1.65;color:var(--ink-soft);}
   .scroll-cue{display:flex;flex-direction:column;align-items:center;gap:10px;
-    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);flex-shrink:0;}
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);flex-shrink:0;}
   .scroll-cue .stem{width:1px;height:52px;background:var(--ink-faint);position:relative;overflow:hidden;}
   .scroll-cue .stem::after{content:'';position:absolute;top:-52px;left:0;width:100%;height:52px;
-    background:var(--sage-deep);animation:drip 2.2s ease-in-out infinite;}
+    background:var(--accent);animation:drip 2.2s ease-in-out infinite;}
   @keyframes drip{0%{top:-52px}60%{top:52px}100%{top:52px}}
 
   .reveal{opacity:0;transform:translateY(26px);
@@ -93,13 +287,13 @@
   .intro{padding:70px var(--edge);}
   .intro-grid{display:grid;grid-template-columns:190px 1fr;gap:56px;max-width:1320px;margin:0 auto;}
   .intro-statement{font-size:clamp(25px,3.3vw,40px);line-height:1.28;font-weight:340;max-width:900px;}
-  .intro-statement .accent{color:var(--sage-deep);font-style:italic;}
+  .intro-statement .accent{color:var(--accent);font-style:italic;}
 
   /* ================= WORK LIST ================= */
   .work-head{max-width:1320px;margin:0 auto 54px;padding:0 var(--edge);
     display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;}
   .work-head h2{font-size:clamp(30px,4vw,50px);font-weight:340;}
-  .work-note{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;}
+  .work-note{font-family:var(--mono);font-size:10px;color:var(--ink-faint);letter-spacing:.12em;text-transform:uppercase;}
 
   #workList{ max-width:1320px; margin:0 auto; padding:0 var(--edge) 40px; }
 
@@ -122,13 +316,13 @@
   /* LEFT column — right aligned like BIG */
   .proj-left{ text-align:right; padding-top:2px; }
   .proj-icon{
-    width:44px;height:44px;background:var(--ink);border-radius:2px;
+    width:40px;height:40px;background:var(--ink);border-radius:1px;
     display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;
   }
-  .proj-icon svg{width:62%;height:62%;stroke:var(--bg);}
-  .proj-title{font-family:'Fraunces',serif;font-size:clamp(17px,1.5vw,21px);font-weight:440;line-height:1.25;margin-bottom:5px;
+  .proj-icon svg{width:58%;height:58%;stroke:var(--bg);}
+  .proj-title{font-family:'Newsreader',Georgia,serif;font-size:clamp(17px,1.5vw,21px);font-weight:400;line-height:1.25;margin-bottom:5px;
     transition:color .3s ease;}
-  .proj-loc{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);}
+  .proj-loc{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);}
 
   .proj-facts{
     margin-top:30px;
@@ -137,14 +331,14 @@
   }
   .proj.open .proj-facts{max-height:600px;opacity:1;transition:max-height .85s cubic-bezier(.22,.85,.24,1),opacity .6s ease .25s;}
   .fact{margin-bottom:18px;}
-  .fact-l{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
-  .fact-v{font-size:12.5px;line-height:1.4;text-transform:uppercase;letter-spacing:.02em;}
+  .fact-l{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .fact-v{font-family:var(--mono);font-size:11.5px;line-height:1.45;text-transform:uppercase;letter-spacing:.03em;}
   .proj-share{margin-top:34px;}
   .proj-share .label{font-size:9px;margin-bottom:8px;display:block;}
   .share-row{display:flex;gap:6px;justify-content:flex-end;}
   .share-row a{width:18px;height:18px;background:var(--ink);color:var(--bg);border-radius:2px;
     display:flex;align-items:center;justify-content:center;font-size:9px;transition:background .25s ease;}
-  .share-row a:hover{background:var(--sage-deep);}
+  .share-row a:hover{background:var(--accent);}
 
   /* CENTER image */
   /* ---- MOTION WRAPPER -------------------------------------------------
@@ -200,8 +394,8 @@
     padding:8px 4px 8px 0; min-width:0;
   }
   .panel-kicker{
-    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--ink-faint); margin-bottom:14px; font-weight:500;
+    font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px; font-weight:500;
   }
   .panel-text{
     font-size:14px; line-height:1.7; color:var(--ink-soft); margin:0 0 18px;
@@ -267,27 +461,34 @@
     display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:30px;
     padding-top:34px;border-top:1px solid var(--line);
   }
-  .cred-l{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+  .cred-l{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
   .cred-v{font-size:12.5px;line-height:1.75;}
   .cred-v span{display:block;}
 
-  /* ---------- ART PLATES ---------- */
-  .plate{position:relative;border-radius:2px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-  .plate svg{width:38%;height:38%;opacity:.5;}
-  .plate .tag{position:absolute;bottom:11px;right:13px;font-size:8.5px;letter-spacing:.1em;
-    text-transform:uppercase;color:rgba(38,36,31,.36);}
-  .tone-sage{background:linear-gradient(140deg,#EDEFE5,#DCE0CE);}
-  .tone-oak{background:linear-gradient(140deg,#F3ECDF,#E4D3B6);}
-  .tone-stone{background:linear-gradient(140deg,#F1EFE9,#E0DCD0);}
-  .tone-blush{background:linear-gradient(140deg,#F4EEE9,#E9D9CD);}
-  .tone-slate{background:linear-gradient(140deg,#EAEDEC,#D3DAD6);}
+  /* ---------- ART PLATES (diagram paper) ---------- */
+  .plate{
+    position:relative;border-radius:1px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(26,26,24,.1);
+  }
+  .plate svg{width:36%;height:36%;opacity:.55;stroke-width:1;}
+  .plate .tag{
+    position:absolute;bottom:11px;right:13px;
+    font-family:var(--mono);font-size:8px;letter-spacing:.12em;
+    text-transform:uppercase;color:rgba(26,26,24,.4);
+  }
+  .tone-sage{background:linear-gradient(145deg,#E6E8E5,#D5D8D4);}
+  .tone-oak{background:linear-gradient(145deg,#E9E8E3,#D8D7D1);}
+  .tone-stone{background:linear-gradient(145deg,#E4E5E2,#D3D4D0);}
+  .tone-blush{background:linear-gradient(145deg,#E8E7E4,#D9D8D4);}
+  .tone-slate{background:linear-gradient(145deg,#E2E5E4,#D0D5D3);}
 
   /* ---------- PROCESS / ABOUT / FOOTER ---------- */
   .process{background:var(--bg-soft);}
   .process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
     border:1px solid var(--line);margin-top:54px;}
   .process-cell{background:var(--bg-soft);padding:40px 28px;}
-  .process-num{font-family:'Fraunces',serif;font-size:14px;color:var(--sage-deep);margin-bottom:24px;}
+  .process-num{font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:24px;letter-spacing:.08em;}
   .process-cell h3{font-size:18px;margin-bottom:11px;}
   .process-cell p{font-size:13px;line-height:1.65;color:var(--ink-soft);margin:0;}
 
@@ -303,13 +504,13 @@
     max-width:1320px;margin:0 auto 80px;}
   .contact-big{font-size:clamp(32px,6vw,80px);font-weight:340;max-width:680px;line-height:1.05;}
   .contact-big a{border-bottom:1px solid var(--ink-faint);transition:color .3s ease,border-color .3s ease;}
-  .contact-big a:hover{color:var(--sage-deep);border-color:var(--sage-deep);}
+  .contact-big a:hover{color:var(--accent);border-color:var(--accent);}
   .footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
     max-width:1320px;margin:0 auto;padding-top:28px;border-top:1px solid var(--line);
     font-size:10.5px;color:var(--ink-faint);letter-spacing:.05em;}
   .socials{display:flex;gap:24px;}
   .socials a{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
-  .socials a:hover{color:var(--sage-deep);}
+  .socials a:hover{color:var(--accent);}
 
   /* ---------- RESPONSIVE ---------- */
   @media (max-width:900px){
@@ -341,20 +542,20 @@
   <nav class="links">
     <a href="#work">Work</a><a href="#approach">Approach</a><a href="#about">About</a><a href="#contact">Contact</a>
   </nav>
-  <div class="ticker"><span aria-hidden="true">✳</span><span class="ticker-word" id="tickerWord">Residential</span></div>
+  <div class="ticker"><span aria-hidden="true">+</span><span class="ticker-word" id="tickerWord">Residential</span></div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-wash"></div><div class="hero-rays"></div>
   <div class="hero-top">
-    <div class="label" style="max-width:220px">İç Mimarlık — Interior Architecture<br>Based in Istanbul, open to relocation</div>
-    <div class="label hero-index">Studio&nbsp;Projects<br>2022&nbsp;— 2026</div>
+    <div class="label" style="max-width:260px">Interior Architecture<br>İstanbul · Open to relocation</div>
+    <div class="label hero-index">Portfolio 01–06<br>Studio 2022 — 2026</div>
   </div>
   <div>
     <h1 class="hero-name">Gizem<br><em>Koçak</em></h1>
     <div class="hero-bottom">
-      <p class="hero-tagline">Interior architecture graduate working from concept through construction detail — across residential, hospitality, education, and cultural spaces.</p>
+      <p class="hero-tagline">Interior architecture graduate — concept, space planning, technical drawing and construction detail. Residential, hospitality, education and cultural projects.</p>
       <div class="scroll-cue"><span>Scroll</span><span class="stem"></span></div>
     </div>
   </div>
@@ -363,7 +564,7 @@
 <!-- INTRO -->
 <section class="intro">
   <div class="intro-grid">
-    <div class="label reveal">Studio&nbsp;Note</div>
+    <div class="label reveal">01 · Note</div>
     <p class="intro-statement reveal">A space works when the plan, the material, and the person <span class="accent">using</span> it are all solving the same problem.</p>
   </div>
 </section>
@@ -371,8 +572,8 @@
 <!-- WORK -->
 <div id="work">
   <div class="work-head reveal">
-    <h2>Studio Projects</h2>
-    <div class="work-note">Click any project to open it in place</div>
+    <h2>Selected Work</h2>
+    <div class="work-note">Click to expand · ← → to navigate drawings</div>
   </div>
   <div id="workList"></div>
 </div>
@@ -380,8 +581,8 @@
 <!-- APPROACH -->
 <section class="process" id="approach">
   <div class="section-inner">
-    <div class="label reveal">How a Project Moves</div>
-    <h2 class="reveal" style="margin-top:14px;font-size:clamp(30px,4vw,50px);font-weight:340;">Approach</h2>
+    <div class="label reveal">02 · Method</div>
+    <h2 class="reveal" style="margin-top:14px;font-size:clamp(30px,4vw,50px);font-weight:300;">Approach</h2>
     <div class="process-grid reveal">
       <div class="process-cell"><div class="process-num">01</div><h3>Concept</h3><p>Reading the brief and the user before drawing anything — how a space will actually be moved through and lived in.</p></div>
       <div class="process-cell"><div class="process-num">02</div><h3>Material</h3><p>Moodboards and material studies tested against real constraints — cost, durability, and how a surface ages.</p></div>
