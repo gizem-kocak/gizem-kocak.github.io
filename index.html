@@ -33,6 +33,7 @@
   .label{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; }
   ::selection{background:var(--sage);color:var(--paper);}
   a:focus-visible,button:focus-visible{outline:2px solid var(--sage-deep);outline-offset:4px;}
+  #smoothWrap{ position:fixed; top:0; left:0; width:100%; will-change:transform; }
 
   /* ---------- NAV ---------- */
   header{
@@ -104,13 +105,13 @@
 
   .proj{
     display:grid;
-    grid-template-columns:var(--colL,300px) var(--colC,1fr) var(--colR,0px);
-    gap:var(--gap,34px);
+    grid-template-columns:var(--colL,clamp(240px,26vw,420px)) var(--colC,clamp(360px,30vw,470px)) var(--colR,0px);
+    gap:var(--gap,40px);
     align-items:start;
-    margin-bottom:74px;
-    transition:grid-template-columns .85s cubic-bezier(.22,.85,.24,1), gap .85s cubic-bezier(.22,.85,.24,1);
-    will-change:transform;
+    margin-bottom:26px;
+    transition:grid-template-columns .8s cubic-bezier(.22,.85,.24,1), gap .8s cubic-bezier(.22,.85,.24,1);
   }
+  .proj.open{ margin-bottom:70px; margin-top:44px; }
   /* scroll-driven liveliness applied to this inner wrapper */
   .proj-motion{ display:contents; }
 
@@ -145,10 +146,10 @@
   .proj-stage{ cursor:pointer; position:relative; overflow:hidden; border-radius:2px; }
   .proj-stage .plate{
     width:100%;
-    height:var(--imgH, 300px);
-    transition:height .85s cubic-bezier(.22,.85,.24,1);
+    height:clamp(230px, 24vw, 330px);
+    transition:height .8s cubic-bezier(.22,.85,.24,1);
   }
-  .proj.open .proj-stage .plate{ height:var(--imgHopen, 600px); }
+  .proj.open .proj-stage .plate{ height:clamp(420px, 46vw, 620px); }
   .proj-stage::after{
     content:'View project';
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
@@ -161,11 +162,15 @@
 
   /* RIGHT column — description */
   .proj-right{
+    max-height:0;
     opacity:0;transform:translateX(-14px);
-    transition:opacity .6s ease,transform .7s cubic-bezier(.22,.85,.24,1);
+    transition:opacity .5s ease,transform .6s cubic-bezier(.22,.85,.24,1),max-height .8s cubic-bezier(.22,.85,.24,1);
     overflow:hidden;
   }
-  .proj.open .proj-right{opacity:1;transform:translateX(0);transition:opacity .7s ease .3s,transform .8s cubic-bezier(.22,.85,.24,1) .3s;}
+  .proj.open .proj-right{
+    max-height:800px;opacity:1;transform:translateX(0);
+    transition:opacity .7s ease .3s,transform .8s cubic-bezier(.22,.85,.24,1) .3s,max-height .8s cubic-bezier(.22,.85,.24,1);
+  }
   .proj-right p{font-size:13px;line-height:1.68;color:var(--ink-soft);margin:0 0 15px;}
 
   /* EXPANDED lower content: filmstrip + credits */
@@ -204,7 +209,7 @@
 
   /* ---------- ART PLATES ---------- */
   .plate{position:relative;border-radius:2px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-  .plate svg{width:38%;height:38%;opacity:.5;will-change:transform;}
+  .plate svg{width:38%;height:38%;opacity:.5;}
   .plate .tag{position:absolute;bottom:11px;right:13px;font-size:8.5px;letter-spacing:.1em;
     text-transform:uppercase;color:rgba(38,36,31,.36);}
   .tone-sage{background:linear-gradient(140deg,#EDEFE5,#DCE0CE);}
@@ -501,14 +506,7 @@ const projects=Array.from(document.querySelectorAll('[data-proj]'));
 function toggle(proj){
   const open = proj.classList.toggle('open');
   proj.querySelector('[data-stage]').setAttribute('aria-expanded',String(open));
-  if(open){
-    // anchor scroll so the project's top stays put as it grows
-    const before = proj.getBoundingClientRect().top;
-    requestAnimationFrame(()=>{
-      const after = proj.getBoundingClientRect().top;
-      if(Math.abs(after-before)>2) scrollBy(0, after-before);
-    });
-  }
+  if(typeof applyColumns==='function') applyColumns();
 }
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
@@ -540,70 +538,90 @@ projects.forEach(proj=>{
   },{passive:true});
 });
 
-/* ============ LIVELY SCROLL-DRIVEN LAYOUT ============ */
+/* ============ SCROLL-DRIVEN LAYOUT ============
+   BIG's collapsed list is deliberately STATIC: uniform image width,
+   uniform column widths, no scaling/drift/fade. All the motion comes
+   from momentum-eased scrolling + the expand transition. */
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let ticking=false, active=false;
 
-function layout(){
-  if(!active){ticking=false;return;}
+function applyColumns(){
   const mobile = innerWidth<=900;
-  const vh = innerHeight;
-
   projects.forEach(proj=>{
-    if(mobile||reduce){
-      proj.style.cssText=''; return;
-    }
-    const r=proj.getBoundingClientRect();
-    const stage=proj.querySelector('.proj-stage');
-    const sr=stage.getBoundingClientRect();
-    const center=sr.top+sr.height/2;
-
-    // 0 at viewport edges, 1 at viewport centre
-    let focus = 1 - Math.min(Math.abs(center - vh/2)/(vh*0.72), 1);
-    focus = focus*focus*(3-2*focus); // smoothstep
-
-    const isOpen = proj.classList.contains('open');
-
-    if(isOpen){
+    if(mobile){ proj.style.cssText=''; return; }
+    if(proj.classList.contains('open')){
       proj.style.setProperty('--colL','clamp(190px,17vw,250px)');
       proj.style.setProperty('--colC','minmax(0,1fr)');
       proj.style.setProperty('--colR','clamp(200px,20vw,300px)');
       proj.style.setProperty('--gap','clamp(26px,3vw,48px)');
-      proj.style.setProperty('--imgHopen', `${Math.round(430 + focus*180)}px`);
-      proj.style.transform='none';
     } else {
-      // collapsed rows breathe: narrower at the edges, wider at centre
-      const colC = 420 + focus*300;             // image column grows toward centre
-      const colL = 300 - focus*40;              // label column tightens slightly
-      proj.style.setProperty('--colL',`${colL}px`);
-      proj.style.setProperty('--colC',`${colC}px`);
+      proj.style.setProperty('--colL','clamp(240px,26vw,420px)');
+      proj.style.setProperty('--colC','clamp(360px,30vw,470px)');
       proj.style.setProperty('--colR','0px');
-      proj.style.setProperty('--gap',`${34 + focus*10}px`);
-      proj.style.setProperty('--imgH',`${Math.round(250 + focus*180)}px`);
-      // gentle horizontal drift + lift, the "alive" quality
-      const drift = (1-focus)*26;
-      proj.style.transform=`translate3d(${drift}px, ${(1-focus)*10}px, 0)`;
-      proj.style.opacity = 0.55 + focus*0.45;
+      proj.style.setProperty('--gap','40px');
     }
-
-    // inner icon parallax
-    const svg=stage.querySelector('svg');
-    if(svg){
-      const p=(vh/2-center)/vh;
-      svg.style.transform=`translateY(${(p*34).toFixed(1)}px) scale(${(1+focus*0.06).toFixed(3)})`;
-    }
+    proj.style.transform='none';
+    proj.style.opacity='1';
   });
-  requestAnimationFrame(layout);
 }
+applyColumns();
+addEventListener('resize',applyColumns);
 
-const workIO=new IntersectionObserver(es=>es.forEach(e=>{
-  active=e.isIntersecting;
-  if(active&&!ticking){ticking=true;requestAnimationFrame(layout);}
-  if(!active)ticking=false;
-}),{threshold:0});
-workIO.observe(document.getElementById('work'));
+/* ============ MOMENTUM-EASED SMOOTH SCROLL ============
+   This is the actual source of BIG's "buttery" feel: the page position
+   is interpolated toward the real scroll target each frame instead of
+   snapping to it. Disabled for reduced-motion and touch devices, which
+   already have native momentum. */
+const isTouch = matchMedia('(hover: none)').matches;
 
-addEventListener('resize',()=>{ if(innerWidth<=900) projects.forEach(p=>p.style.cssText=''); });
+if(!reduce && !isTouch){
+  const content = document.createElement('div');
+  content.id = 'smoothWrap';
+  const hdr = document.getElementById('siteHeader');
+  // everything except the fixed header moves inside the smooth wrapper
+  Array.from(document.body.children).forEach(n=>{
+    if(n!==hdr && n.tagName!=='SCRIPT') content.appendChild(n);
+  });
+  document.body.appendChild(content);
+
+  Object.assign(content.style,{
+    position:'fixed', top:'0', left:'0', width:'100%', willChange:'transform'
+  });
+  const spacer = document.createElement('div');
+  document.body.appendChild(spacer);
+  document.body.style.overscrollBehavior='none';
+
+  let target=0, current=0, height=0;
+  const EASE = 0.085;   // lower = longer, heavier glide
+
+  function measure(){
+    height = content.getBoundingClientRect().height;
+    spacer.style.height = height + 'px';
+  }
+  measure();
+  new ResizeObserver(measure).observe(content);
+
+  function raf(){
+    target = scrollY;
+    current += (target - current) * EASE;
+    if(Math.abs(target-current) < 0.05) current = target;
+    content.style.transform = `translate3d(0, ${-current.toFixed(2)}px, 0)`;
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+
+  // keep anchor links working against the virtual scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',e=>{
+      const id=a.getAttribute('href');
+      if(id==='#') return;
+      const el=document.querySelector(id);
+      if(!el) return;
+      e.preventDefault();
+      const y = el.getBoundingClientRect().top + current;
+      scrollTo({top:y, behavior:'smooth'});
+    });
+  });
+}
 
 document.getElementById('backTop').addEventListener('click',e=>{
   e.preventDefault(); scrollTo({top:0,behavior:'smooth'});
