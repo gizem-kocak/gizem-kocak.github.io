@@ -110,6 +110,10 @@
     align-items:start;
     margin-bottom:26px;
     transition:grid-template-columns .8s cubic-bezier(.22,.85,.24,1), gap .8s cubic-bezier(.22,.85,.24,1);
+    /* the motion system transforms the whole row, so the icon, title and
+       location compress together with the image as one 2D object */
+    transform-origin:50% 50%;
+    will-change:transform;
   }
   .proj.open{ margin-bottom:70px; margin-top:44px; }
   /* scroll-driven liveliness applied to this inner wrapper */
@@ -143,25 +147,29 @@
   .share-row a:hover{background:var(--sage-deep);}
 
   /* CENTER image */
+  /* ---- MOTION WRAPPER -------------------------------------------------
+     .proj-stage is a fixed-height slot so page layout never shifts.
+     .proj-crop is the element the motion system transforms. It always keeps
+     its full height — the compression is a flat 2D scale, never a change of
+     box size, so nothing reflows and the artwork is never re-cropped.      */
+  .proj{ --slotH: clamp(230px, 24vw, 330px); }
+  .proj.open{ --slotH: clamp(460px, 52vw, 720px); }
+
   .proj-stage{
-    cursor:pointer; position:relative; overflow:hidden; border-radius:2px;
-    transform-origin:50% 50%;
-    will-change:transform;
-    backface-visibility:hidden;
+    cursor:pointer; position:relative;
+    height:var(--slotH);
+    transition:height .85s cubic-bezier(.22,.9,.24,1);
   }
-  .proj-stage .plate{
-    width:100%;
-    height:clamp(230px, 24vw, 330px);
-    transition:height .8s cubic-bezier(.22,.85,.24,1);
-    transform-origin:center center;
-    will-change:transform;
+  .proj-crop{
+    position:relative; width:100%; height:100%;
+    overflow:hidden; border-radius:2px;
   }
-  .proj.open .proj-stage .plate{ height:clamp(420px, 46vw, 620px); }
+  .proj-crop .plate{ width:100%; height:100%; }
   .proj-stage::after{
     content:'View project';
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
     background:rgba(38,36,31,.82);color:#fff;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-    padding:11px 20px;border-radius:100px;opacity:0;pointer-events:none;
+    padding:11px 20px;border-radius:100px;opacity:0;pointer-events:none;z-index:3;
     transition:opacity .35s ease,transform .35s ease;
   }
   .proj-stage:hover::after{opacity:1;transform:translate(-50%,-50%) scale(1);}
@@ -466,7 +474,7 @@ list.innerHTML = PROJECTS.map(p=>`
     </div>
 
     <div class="proj-stage" data-stage role="button" tabindex="0" aria-expanded="false" aria-controls="${p.id}-x">
-      ${plate(p.icon,p.tone)}
+      <div class="proj-crop" data-crop>${plate(p.icon,p.tone)}</div>
     </div>
 
     <div class="proj-right">${p.text.map(t=>`<p>${t}</p>`).join('')}</div>
@@ -512,19 +520,26 @@ const projects=Array.from(document.querySelectorAll('[data-proj]'));
 
 function toggle(proj){
   const open = proj.classList.toggle('open');
-  proj.querySelector('[data-stage]').setAttribute('aria-expanded',String(open));
-  if(typeof applyColumns==='function') applyColumns();
-  // geometry changed — refresh the cache during and after the transition
-  if(typeof measure==='function'){
-    requestAnimationFrame(measure);
+  proj.querySelector('[data-stage]').setAttribute('aria-expanded', String(open));
+  if(typeof applyColumns === 'function') applyColumns();
+
+  // the opened project starts dominant; its contraction is measured from
+  // the scroll position at the moment it opened
+  if(typeof openedAt !== 'undefined') openedAt = open ? scrollPos : null;
+
+  // keep this row pinned in the viewport while it grows or shrinks
+  if(typeof startAnchor === 'function') startAnchor(proj);
+
+  if(typeof measure === 'function'){
     const t0 = performance.now();
     const settle = ()=>{
       measure();
-      if(performance.now() - t0 < 950) requestAnimationFrame(settle);
+      if(performance.now() - t0 < 1000) requestAnimationFrame(settle);
     };
     requestAnimationFrame(settle);
   }
 }
+
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
   stage.addEventListener('click',()=>toggle(proj));
@@ -565,6 +580,7 @@ function applyColumns(){
   projects.forEach(proj=>{
     if(mobile){
       ['--colL','--colC','--colR','--gap'].forEach(v=>proj.style.removeProperty(v));
+      proj.style.transform = '';
       return;
     }
     if(proj.classList.contains('open')){
@@ -594,12 +610,13 @@ applyColumns();
    - Geometry (offsetTop/offsetHeight) is cached on load, resize and expand.
      The loop NEVER reads layout, so reads and writes cannot interleave and
      there is no thrashing regardless of how many projects exist.
-   - Writes are transform only (scale3d / translate3d) — compositor-friendly,
-     no paint, no reflow.
+   - The scroll effect writes ONE property (the crop window's height) on a
+     handful of fixed-height slots, so reflow is contained and never cascades.
    - An IntersectionObserver keeps the write set to rows near the viewport,
      so cost stays flat as the list grows.                                   */
 
 const stages  = projects.map(p=>p.querySelector('.proj-stage'));
+const crops   = projects.map(p=>p.querySelector('[data-crop]'));
 let   geo     = [];
 const visible = new Set();
 let   smooth  = null;
@@ -613,10 +630,10 @@ const vio = new IntersectionObserver(entries=>{
   entries.forEach(e=>{
     const i = projects.indexOf(e.target);
     if(i<0) return;
-    if(e.isIntersecting){ visible.add(i); }
-    else { visible.delete(i); stages[i].style.transform=''; }
+    if(e.isIntersecting) visible.add(i);
+    else { visible.delete(i); projects[i].style.transform = ''; }
   });
-},{ rootMargin:'30% 0px 30% 0px' });
+},{ rootMargin:'70% 0px 70% 0px' });
 projects.forEach(p=>vio.observe(p));
 
 /* ---- momentum scroll wrapper ---- */
@@ -654,20 +671,52 @@ measure();
 addEventListener('resize', ()=>{ applyColumns(); requestAnimationFrame(measure); }, {passive:true});
 addEventListener('load',   ()=>requestAnimationFrame(measure));
 
-/* ---- tuning ---- */
-const EASE     = 0.09;   // how closely the page follows the real scroll
-const VEL_EASE = 0.12;   // how quickly the velocity term relaxes
-const POS_AMP  = 0.075;  // position squeeze: 7.5% at the viewport edges
-const VEL_AMP  = 0.030;  // velocity squeeze: up to a further 3% under speed
-const VEL_REF  = 1400;   // px/sec that reaches full velocity squeeze
-const DRIFT    = 14;     // px of counter-drift, for depth
+/* =====================================================================
+   MOTION SYSTEM  —  flat 2D, velocity driven
+
+   AT REST every project sits at exactly scale 1. Nothing is scaled because
+   of where it happens to sit in the viewport. The compression is produced
+   purely by how fast the page is moving, so the whole visible catalogue
+   reacts together to the momentum of the scroll and relaxes back when it
+   stops.
+
+   The compression is NON-UNIFORM: horizontal is always stronger than
+   vertical, so a project reads as "narrower and slightly shorter" rather
+   than squashed flat. No perspective, no rotation, no translateZ — the only
+   3D token in the file is translate3d, used solely to hold the element on
+   its own compositor layer.
+
+   TUNING — the numbers worth touching:
+     SQ_X      how narrow a project gets at full speed   (lower = stronger)
+     SQ_Y      how short it gets at full speed           (keep above SQ_X)
+     VEL_REF   scroll speed, px/sec, that reaches full compression
+     DRIFT_Y   px of travel with the scroll direction
+   ===================================================================== */
+const SQ_X    = 0.86;   // scaleX at full speed  — horizontal is stronger
+const SQ_Y    = 0.94;   // scaleY at full speed  — vertical is gentler
+const VEL_REF = 1500;   // px/sec that reaches full compression
+const DRIFT_Y = 16;     // px of drift along the scroll direction
+const DRIFT_X = 6;      // px of lateral drift, for the diagonal feel
+const LERP    = 0.085;  // inertia of the compression itself
+const EASE    = 0.09;   // how closely the page follows the real scroll
+const VEL_EASE= 0.14;   // smoothing applied to raw scroll velocity
+
+/* how far the page must scroll for an opened project to return to
+   the scale of its neighbours */
+const OPEN_TRAVEL = 750;
+const OPEN_SX     = 0.74;   // horizontal shrink at the end of that travel
+const OPEN_SY     = 0.84;   // vertical shrink — again gentler than X
 
 let scrollPos = scrollY;
 let lastPos   = scrollPos;
-let vel       = 0;
+let vel       = 0;      // smoothed velocity, px/frame
+let comp      = 0;      // eased compression, 0 at rest → 1 at full speed
+let dirSmooth = 0;      // smoothed scroll direction, -1 … 1
+
+let openedAt  = null;   // scroll position when the current project opened
 
 function frame(){
-  const target = scrollY;                 // the only read; never forces layout
+  const target = scrollY;             // the only read; never forces layout
 
   if(useSmooth){
     scrollPos += (target - scrollPos) * EASE;
@@ -680,41 +729,107 @@ function frame(){
   lastPos = scrollPos;
   vel += (raw - vel) * VEL_EASE;
 
-  /* ---------- writes only below this line ---------- */
+  // normalised speed, then eased so the onset is never abrupt
+  let sp = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
+  sp = sp * sp * (3 - 2 * sp);
+
+  // the compression carries its own inertia in BOTH directions:
+  // it builds as the scroll accelerates and recovers as it settles
+  comp += (sp - comp) * LERP;
+  if(comp < 0.0006) comp = 0;
+
+  const dirTarget = vel > 0.2 ? 1 : (vel < -0.2 ? -1 : 0);
+  dirSmooth += (dirTarget - dirSmooth) * 0.1;
+
+  /* ---------------- writes only below this line ---------------- */
   if(useSmooth) smooth.write(scrollPos);
+  if(anchorPending) holdAnchor();
 
   if(!reduce && innerWidth > 900){
-    const vh   = innerHeight;
-    const half = vh / 2;
-
-    // velocity term — adds weight to fast movement, relaxes at rest
-    let v = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
-    v = v * v * (3 - 2 * v);
-    const vSq = v * VEL_AMP;
+    // one shared value → every visible project reacts as one catalogue
+    const sx = 1 - (1 - SQ_X) * comp;
+    const sy = 1 - (1 - SQ_Y) * comp;
+    const dy = dirSmooth * DRIFT_Y * comp;
+    const dx = dirSmooth * DRIFT_X * comp;
 
     visible.forEach(i=>{
-      const g = geo[i];
-      if(!g) return;
+      let fx = sx, fy = sy, ox = dx, oy = dy;
 
-      // where this row sits in the viewport: 0 at centre, 1 at either edge.
-      // This is a continuous function of position, so ANY scroll changes it.
-      const centre = g.top + g.h / 2 - scrollPos;
-      const p = (centre - half) / (half * 1.35);   // softer falloff, less clamping
-      const t = Math.min(Math.abs(p), 1);
-      const eased = t * t;                      // gentle near centre
+      // an opened project starts dominant and contracts back toward the
+      // others as the page scrolls on past it
+      if(openedAt !== null && projects[i].classList.contains('open')){
+        let t = (scrollPos - openedAt) / OPEN_TRAVEL;
+        t = t < 0 ? 0 : (t > 1 ? 1 : t);
+        t = t * t * (3 - 2 * t);
+        fx *= 1 - (1 - OPEN_SX) * t;
+        fy *= 1 - (1 - OPEN_SY) * t;
+      }
 
-      const sy = 1 - (POS_AMP * eased + vSq);
-      const sx = 1 + (POS_AMP * eased + vSq) * 0.22;   // apparent mass held
-      const dy = -p * DRIFT * eased;                   // slight counter-drift
-
-      stages[i].style.transform =
-        `translate3d(0,${dy.toFixed(2)}px,0) scale3d(${sx.toFixed(4)},${sy.toFixed(4)},1)`;
+      projects[i].style.transform =
+        `translate3d(${ox.toFixed(2)}px,${oy.toFixed(2)}px,0) scale(${fx.toFixed(4)},${fy.toFixed(4)})`;
     });
   }
 
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+/* ============ SCROLL ANCHORING ============
+   Keeps the clicked project pinned under the cursor while it grows or
+   shrinks, so opening and closing never throws the reader's position. */
+let anchorEl = null, anchorOffset = 0, anchorUntil = 0, anchorPending = false;
+
+function startAnchor(el){
+  anchorEl = el;
+  anchorOffset = el.offsetTop - scrollPos;
+  anchorUntil = performance.now() + 950;
+  anchorPending = true;
+}
+function holdAnchor(){
+  if(!anchorEl){ anchorPending = false; return; }
+  const desired = anchorEl.offsetTop - anchorOffset;
+  if(Math.abs(desired - scrollPos) > 0.5){
+    scrollPos = lastPos = Math.max(desired, 0);
+    scrollTo(0, scrollPos);
+  }
+  if(performance.now() > anchorUntil){ anchorPending = false; anchorEl = null; }
+}
+
+/* ============ PREV / NEXT PROJECT ============
+   With a project open: Left/Right and swipe move between PROJECTS. */
+function openIndex(){ return projects.findIndex(p=>p.classList.contains('open')); }
+
+function goToProject(dir){
+  const cur = openIndex();
+  if(cur < 0) return false;
+  const next = (cur + dir + projects.length) % projects.length;
+  if(next === cur) return false;
+  toggle(projects[cur]);
+  toggle(projects[next]);
+  scrollTo({ top: Math.max(projects[next].offsetTop - 140, 0), behavior:'smooth' });
+  return true;
+}
+
+addEventListener('keydown', e=>{
+  if(openIndex() < 0) return;
+  if(e.key === 'ArrowRight' && goToProject(1))  e.preventDefault();
+  else if(e.key === 'ArrowLeft' && goToProject(-1)) e.preventDefault();
+  else if(e.key === 'Escape'){
+    const c = openIndex();
+    if(c >= 0) toggle(projects[c]);
+  }
+});
+
+let tX = 0, tY = 0;
+addEventListener('touchstart', e=>{
+  tX = e.changedTouches[0].clientX; tY = e.changedTouches[0].clientY;
+}, {passive:true});
+addEventListener('touchend', e=>{
+  if(openIndex() < 0) return;
+  const dx = e.changedTouches[0].clientX - tX;
+  const dy = e.changedTouches[0].clientY - tY;
+  if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.5) goToProject(dx < 0 ? 1 : -1);
+}, {passive:true});
 
 document.getElementById('backTop').addEventListener('click',e=>{
   e.preventDefault(); scrollTo({top:0,behavior:'smooth'});
