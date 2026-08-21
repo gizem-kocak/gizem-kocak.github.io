@@ -153,51 +153,91 @@
      its full height — the compression is a flat 2D scale, never a change of
      box size, so nothing reflows and the artwork is never re-cropped.      */
   .proj{ --slotH: clamp(230px, 24vw, 330px); }
-  .proj.open{ --slotH: clamp(520px, 58vw, 780px); }
+  .proj.open{ --slotH: clamp(420px, 48vw, 640px); }
 
+  /* ---- STAGE (closed = single preview; open = image+text carousel) ---- */
   .proj-stage{
     cursor:pointer; position:relative;
     height:var(--slotH);
     transition:height .85s cubic-bezier(.22,.9,.24,1);
-  }
-  .proj-crop{
-    position:relative; width:100%; height:100%;
     overflow:hidden; border-radius:2px;
   }
-  .proj-crop .plate{ width:100%; height:100%; }
-  /* horizontal slides inside the main stage when open (BIG-style) */
-  .proj-slides{
-    display:flex; width:100%; height:100%;
-    transition:transform .55s cubic-bezier(.22,.85,.24,1);
+  /* when open, stage spans the two right columns */
+  .proj.open .proj-stage{ grid-column: 2 / -1; }
+
+  .proj-crop{
+    position:relative; width:100%; height:100%;
+    overflow:hidden;
+  }
+
+  /* track of full panels — image + text move together */
+  .proj-track{
+    display:flex; height:100%;
+    transition:transform .6s cubic-bezier(.22,.85,.24,1);
     will-change:transform;
   }
-  .proj-slides .plate{
-    flex:0 0 100%; width:100%; height:100%;
+  .proj-panel{
+    flex:0 0 100%;
+    width:100%; height:100%;
+    display:grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap:28px;
+    align-items:stretch;
+    padding:0 4px;
+    box-sizing:border-box;
   }
+  .proj-panel:nth-child(even){ grid-template-columns: 0.85fr 1.15fr; }
+  .proj-panel:nth-child(even) .panel-img{ order:2; }
+  .proj-panel:nth-child(even) .panel-body{ order:1; }
+
+  .panel-img{
+    position:relative; border-radius:2px; overflow:hidden; min-height:0;
+  }
+  .panel-img .plate{ width:100%; height:100%; }
+
+  .panel-body{
+    display:flex; flex-direction:column; justify-content:center;
+    padding:8px 4px 8px 0; min-width:0;
+  }
+  .panel-kicker{
+    font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:14px; font-weight:500;
+  }
+  .panel-text{
+    font-size:14px; line-height:1.7; color:var(--ink-soft); margin:0 0 18px;
+  }
+  .panel-count{
+    font-size:10.5px; letter-spacing:.1em; color:var(--ink-faint);
+    font-variant-numeric:tabular-nums; margin-top:auto;
+  }
+
+  /* closed: only first image, hide text bodies */
+  .proj:not(.open) .proj-panel{ grid-template-columns:1fr; gap:0; padding:0; }
+  .proj:not(.open) .panel-body{ display:none; }
+
   .proj-stage::after{
     content:'View project';
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
     background:rgba(38,36,31,.82);color:#fff;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-    padding:11px 20px;border-radius:100px;opacity:0;pointer-events:none;z-index:3;
+    padding:11px 20px;border-radius:100px;opacity:0;pointer-events:none;z-index:5;
     transition:opacity .35s ease,transform .35s ease;
   }
   .proj-stage:hover::after{opacity:1;transform:translate(-50%,-50%) scale(1);}
   .proj.open .proj-stage::after{content:'Close'; opacity:0;}
   .proj.open .proj-stage:hover::after{opacity:0;}
 
-  /* left/right arrows over the main image */
   .proj-nav{
-    position:absolute; inset:0; z-index:4;
+    position:absolute; inset:0; z-index:6;
     display:flex; align-items:center; justify-content:space-between;
-    padding:0 14px; pointer-events:none; opacity:0;
+    padding:0 10px; pointer-events:none; opacity:0;
     transition:opacity .3s ease;
   }
   .proj.open .proj-nav{opacity:1; pointer-events:auto;}
   .proj-nav button{
     width:40px; height:40px; border-radius:50%;
-    background:rgba(255,254,251,.92); border:1px solid var(--line);
+    background:rgba(255,254,251,.94); border:1px solid var(--line);
     color:var(--ink); display:flex; align-items:center; justify-content:center;
-    box-shadow:0 2px 12px rgba(38,36,31,.08);
+    box-shadow:0 2px 12px rgba(38,36,31,.1);
     transition:background .25s ease, color .25s ease, border-color .25s ease, opacity .25s ease;
     pointer-events:auto; cursor:pointer;
   }
@@ -209,36 +249,11 @@
     width:16px; height:16px; stroke:currentColor; fill:none;
     stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
   }
-  .proj-caption{
-    position:absolute; left:0; right:0; bottom:0; z-index:3;
-    display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
-    padding:40px 16px 14px;
-    background:linear-gradient(transparent, rgba(38,36,31,.62));
-    color:#fff; font-size:12px; line-height:1.45;
-    opacity:0; pointer-events:none;
-    transition:opacity .35s ease;
-  }
-  .proj.open .proj-caption{opacity:1;}
-  .proj-caption .cap-text{max-width:72%;}
-  .proj-caption .cap-count{
-    font-size:10.5px; letter-spacing:.1em; opacity:.85;
-    font-variant-numeric:tabular-nums; flex-shrink:0;
-  }
 
-  /* RIGHT column — description */
-  .proj-right{
-    max-height:0;
-    opacity:0;transform:translateX(-14px);
-    transition:opacity .5s ease,transform .6s cubic-bezier(.22,.85,.24,1),max-height .8s cubic-bezier(.22,.85,.24,1);
-    overflow:hidden;
-  }
-  .proj.open .proj-right{
-    max-height:800px;opacity:1;transform:translateX(0);
-    transition:opacity .7s ease .3s,transform .8s cubic-bezier(.22,.85,.24,1) .3s,max-height .8s cubic-bezier(.22,.85,.24,1);
-  }
-  .proj-right p{font-size:13px;line-height:1.68;color:var(--ink-soft);margin:0 0 15px;}
+  /* text now lives inside each panel */
+  .proj-right{ display:none; }
 
-  /* EXPANDED lower content: credits only (images live in the main stage carousel) */
+  /* EXPANDED lower content: credits */
   .proj-expand{
     grid-column:1 / -1;
     max-height:0;overflow:hidden;
@@ -304,7 +319,13 @@
     .proj{grid-template-columns:1fr !important;gap:16px !important;transform:none !important;}
     .proj-left{text-align:left;}
     .share-row{justify-content:flex-start;}
-    .proj-stage .plate{height:44vh !important;}
+    .proj.open .proj-stage{grid-column:1 / -1;}
+    .proj-panel,
+    .proj-panel:nth-child(even){grid-template-columns:1fr; gap:16px;}
+    .proj-panel:nth-child(even) .panel-img{order:0;}
+    .proj-panel:nth-child(even) .panel-body{order:0;}
+    .panel-img{min-height:38vh;}
+    .panel-body{padding:4px 0 0;}
     .process-grid{grid-template-columns:1fr;}
     .about-grid{grid-template-columns:1fr;}
     .about-portrait{aspect-ratio:16/10;}
@@ -508,25 +529,29 @@ list.innerHTML = PROJECTS.map(p=>`
 
     <div class="proj-stage" data-stage role="button" tabindex="0" aria-expanded="false" aria-controls="${p.id}-x">
       <div class="proj-crop" data-crop>
-        <div class="proj-slides" data-slides>
-          ${p.strip.map(s=>plate(s.icon,s.tone)).join('')}
+        <div class="proj-track" data-track>
+          ${p.strip.map((s,i)=>`
+            <div class="proj-panel">
+              <div class="panel-img">${plate(s.icon,s.tone)}</div>
+              <div class="panel-body">
+                <div class="panel-kicker">${p.title}</div>
+                <p class="panel-text">${s.cap}</p>
+                ${i===0 ? p.text.map(t=>`<p class="panel-text">${t}</p>`).join('') : ''}
+                <div class="panel-count">${String(i+1).padStart(2,'0')} / ${String(p.strip.length).padStart(2,'0')}</div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
       <div class="proj-nav" data-nav>
-        <button type="button" data-prev aria-label="Previous image">
+        <button type="button" data-prev aria-label="Previous">
           <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button type="button" data-next aria-label="Next image">
+        <button type="button" data-next aria-label="Next">
           <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
-      <div class="proj-caption" data-caption>
-        <span class="cap-text" data-cap>${p.strip[0].cap}</span>
-        <span class="cap-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
-      </div>
     </div>
-
-    <div class="proj-right">${p.text.map(t=>`<p>${t}</p>`).join('')}</div>
 
     <div class="proj-expand" id="${p.id}-x">
       <div class="expand-inner">
@@ -608,20 +633,16 @@ function toggle(proj){
 
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
-  const slides=proj.querySelector('[data-slides]');
+  const track=proj.querySelector('[data-track]');
   const prevBtn=proj.querySelector('[data-prev]');
   const nextBtn=proj.querySelector('[data-next]');
-  const cap=proj.querySelector('[data-cap]');
-  const count=proj.querySelector('[data-count]');
   const data=PROJECTS.find(p=>p.id===proj.id);
   let slideIdx=0;
 
   function setSlide(idx){
     const n=data.strip.length;
     slideIdx=Math.max(0,Math.min(n-1,idx));
-    if(slides) slides.style.transform=`translateX(${-slideIdx*100}%)`;
-    if(cap) cap.textContent=data.strip[slideIdx].cap;
-    if(count) count.textContent=`${String(slideIdx+1).padStart(2,'0')} / ${String(n).padStart(2,'0')}`;
+    if(track) track.style.transform=`translateX(${-slideIdx*100}%)`;
     if(prevBtn) prevBtn.disabled=slideIdx<=0;
     if(nextBtn) nextBtn.disabled=slideIdx>=n-1;
   }
@@ -644,7 +665,7 @@ projects.forEach(proj=>{
   });
   proj.querySelector('.proj-left').style.cursor='pointer';
 
-  // left / right through images inside this project (BIG-style)
+  // left / right moves the whole panel (image + text together)
   if(prevBtn) prevBtn.addEventListener('click',e=>{e.stopPropagation();goSlide(-1);});
   if(nextBtn) nextBtn.addEventListener('click',e=>{e.stopPropagation();goSlide(1);});
 
@@ -663,7 +684,6 @@ projects.forEach(proj=>{
   },{passive:true});
 
   setSlide(0);
-  // expose for keyboard handler
   proj._goSlide=goSlide;
   proj._setSlide=setSlide;
 });
@@ -682,10 +702,11 @@ function applyColumns(){
       return;
     }
     if(proj.classList.contains('open')){
-      proj.style.setProperty('--colL','clamp(190px,17vw,250px)');
+      /* left meta stays; stage spans remaining columns (image + text panels) */
+      proj.style.setProperty('--colL','clamp(180px,16vw,240px)');
       proj.style.setProperty('--colC','minmax(0,1fr)');
-      proj.style.setProperty('--colR','clamp(200px,20vw,300px)');
-      proj.style.setProperty('--gap','clamp(26px,3vw,48px)');
+      proj.style.setProperty('--colR','0px');
+      proj.style.setProperty('--gap','clamp(24px,2.5vw,40px)');
     } else {
       proj.style.setProperty('--colL','clamp(240px,26vw,420px)');
       proj.style.setProperty('--colC','clamp(360px,30vw,470px)');
