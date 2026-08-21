@@ -101,7 +101,7 @@
   .work-head h2{font-size:clamp(30px,4vw,50px);font-weight:340;}
   .work-note{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;}
 
-  #workList{ padding:0 var(--edge) 40px; }
+  #workList{ max-width:1320px; margin:0 auto; padding:0 var(--edge) 40px; }
 
   .proj{
     display:grid;
@@ -143,11 +143,18 @@
   .share-row a:hover{background:var(--sage-deep);}
 
   /* CENTER image */
-  .proj-stage{ cursor:pointer; position:relative; overflow:hidden; border-radius:2px; }
+  .proj-stage{
+    cursor:pointer; position:relative; overflow:hidden; border-radius:2px;
+    transform-origin:50% 50%;
+    will-change:transform;
+    backface-visibility:hidden;
+  }
   .proj-stage .plate{
     width:100%;
     height:clamp(230px, 24vw, 330px);
     transition:height .8s cubic-bezier(.22,.85,.24,1);
+    transform-origin:center center;
+    will-change:transform;
   }
   .proj.open .proj-stage .plate{ height:clamp(420px, 46vw, 620px); }
   .proj-stage::after{
@@ -331,7 +338,7 @@
     </div>
     <div class="reveal">
       <p class="about-quote">"I like a project best when the material, the plan, and the person using the room are all solving the same problem."</p>
-      <p class="about-bio">Gizem Koçak is an interior architect graduating from Mimar Sinan Fine Arts University in Istanbul. Her studio work moves comfortably from concept and space planning through to technical drawing and detailing, with a particular interest in sustainable design, material honesty, furniture design, and visual merchandising across residential, commercial, and institutional projects.</p>
+      <p class="about-bio">Gizem Koçak is an interior architect graduating from Mimar Sinan Fine Arts University in Istanbul, with a GPA of 3.33/4.00. Her studio work moves comfortably from concept and space planning through to technical drawing and detailing, with a particular interest in sustainable design, material honesty, furniture design, and visual merchandising across residential, commercial, and institutional projects.</p>
       <p class="about-bio">Practical experience spans both a design-office internship — concept development, technical drawing, and material board preparation — and a construction-site internship following interior implementation work in the field against the original drawings.</p>
     </div>
   </div>
@@ -507,6 +514,16 @@ function toggle(proj){
   const open = proj.classList.toggle('open');
   proj.querySelector('[data-stage]').setAttribute('aria-expanded',String(open));
   if(typeof applyColumns==='function') applyColumns();
+  // geometry changed — refresh the cache during and after the transition
+  if(typeof measure==='function'){
+    requestAnimationFrame(measure);
+    const t0 = performance.now();
+    const settle = ()=>{
+      measure();
+      if(performance.now() - t0 < 950) requestAnimationFrame(settle);
+    };
+    requestAnimationFrame(settle);
+  }
 }
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
@@ -538,16 +555,18 @@ projects.forEach(proj=>{
   },{passive:true});
 });
 
-/* ============ SCROLL-DRIVEN LAYOUT ============
-   BIG's collapsed list is deliberately STATIC: uniform image width,
-   uniform column widths, no scaling/drift/fade. All the motion comes
-   from momentum-eased scrolling + the expand transition. */
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ============ LAYOUT COLUMNS ============ */
+const reduce  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch = matchMedia('(hover: none)').matches;
+const useSmooth = !reduce && !isTouch;
 
 function applyColumns(){
   const mobile = innerWidth<=900;
   projects.forEach(proj=>{
-    if(mobile){ proj.style.cssText=''; return; }
+    if(mobile){
+      ['--colL','--colC','--colR','--gap'].forEach(v=>proj.style.removeProperty(v));
+      return;
+    }
     if(proj.classList.contains('open')){
       proj.style.setProperty('--colL','clamp(190px,17vw,250px)');
       proj.style.setProperty('--colC','minmax(0,1fr)');
@@ -559,69 +578,129 @@ function applyColumns(){
       proj.style.setProperty('--colR','0px');
       proj.style.setProperty('--gap','40px');
     }
-    proj.style.transform='none';
-    proj.style.opacity='1';
   });
 }
 applyColumns();
-addEventListener('resize',applyColumns);
 
-/* ============ MOMENTUM-EASED SMOOTH SCROLL ============
-   This is the actual source of BIG's "buttery" feel: the page position
-   is interpolated toward the real scroll target each frame instead of
-   snapping to it. Disabled for reduced-motion and touch devices, which
-   already have native momentum. */
-const isTouch = matchMedia('(hover: none)').matches;
+/* ============ MOTION ENGINE ============
+   A single rAF loop drives both the momentum-eased scroll and the squeeze.
 
-if(!reduce && !isTouch){
-  const content = document.createElement('div');
-  content.id = 'smoothWrap';
+   The squeeze is VELOCITY-driven: rows compress vertically in proportion to
+   how fast the page is currently moving and relax back to rest the moment it
+   settles, with a small opposing widening so the mass looks constant. It is a
+   continuous function of scroll state, never a triggered enter/exit animation.
+
+   Performance contract:
+   - Geometry (offsetTop/offsetHeight) is cached on load, resize and expand.
+     The loop NEVER reads layout, so reads and writes cannot interleave and
+     there is no thrashing regardless of how many projects exist.
+   - Writes are transform only (scale3d / translate3d) — compositor-friendly,
+     no paint, no reflow.
+   - An IntersectionObserver keeps the write set to rows near the viewport,
+     so cost stays flat as the list grows.                                   */
+
+const stages  = projects.map(p=>p.querySelector('.proj-stage'));
+let   geo     = [];
+const visible = new Set();
+let   smooth  = null;
+
+function measure(){
+  geo = projects.map(p=>({ top:p.offsetTop, h:p.offsetHeight }));
+  if(smooth) smooth.measure();
+}
+
+const vio = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    const i = projects.indexOf(e.target);
+    if(i<0) return;
+    if(e.isIntersecting){ visible.add(i); }
+    else { visible.delete(i); stages[i].style.transform=''; }
+  });
+},{ rootMargin:'30% 0px 30% 0px' });
+projects.forEach(p=>vio.observe(p));
+
+/* ---- momentum scroll wrapper ---- */
+if(useSmooth){
+  const wrap = document.createElement('div');
+  wrap.id = 'smoothWrap';
   const hdr = document.getElementById('siteHeader');
-  // everything except the fixed header moves inside the smooth wrapper
   Array.from(document.body.children).forEach(n=>{
-    if(n!==hdr && n.tagName!=='SCRIPT') content.appendChild(n);
+    if(n!==hdr && n.tagName!=='SCRIPT') wrap.appendChild(n);
   });
-  document.body.appendChild(content);
+  document.body.appendChild(wrap);
 
-  Object.assign(content.style,{
-    position:'fixed', top:'0', left:'0', width:'100%', willChange:'transform'
-  });
   const spacer = document.createElement('div');
   document.body.appendChild(spacer);
-  document.body.style.overscrollBehavior='none';
+  document.body.style.overscrollBehavior = 'none';
 
-  let target=0, current=0, height=0;
-  const EASE = 0.085;   // lower = longer, heavier glide
+  smooth = {
+    measure(){ spacer.style.height = wrap.scrollHeight + 'px'; },
+    write(y){ wrap.style.transform = `translate3d(0, ${-y.toFixed(2)}px, 0)`; }
+  };
 
-  function measure(){
-    height = content.getBoundingClientRect().height;
-    spacer.style.height = height + 'px';
-  }
-  measure();
-  new ResizeObserver(measure).observe(content);
-
-  function raf(){
-    target = scrollY;
-    current += (target - current) * EASE;
-    if(Math.abs(target-current) < 0.05) current = target;
-    content.style.transform = `translate3d(0, ${-current.toFixed(2)}px, 0)`;
-    requestAnimationFrame(raf);
-  }
-  requestAnimationFrame(raf);
-
-  // keep anchor links working against the virtual scroll
   document.querySelectorAll('a[href^="#"]').forEach(a=>{
     a.addEventListener('click',e=>{
-      const id=a.getAttribute('href');
-      if(id==='#') return;
-      const el=document.querySelector(id);
+      const id = a.getAttribute('href');
+      if(id === '#') return;
+      const el = document.querySelector(id);
       if(!el) return;
       e.preventDefault();
-      const y = el.getBoundingClientRect().top + current;
-      scrollTo({top:y, behavior:'smooth'});
+      scrollTo({ top: el.offsetTop, behavior:'smooth' });
     });
   });
 }
+
+measure();
+addEventListener('resize', ()=>{ applyColumns(); requestAnimationFrame(measure); }, {passive:true});
+addEventListener('load',   ()=>requestAnimationFrame(measure));
+
+/* ---- tuning ---- */
+const EASE     = 0.09;    // how closely the page follows the real scroll
+const VEL_EASE = 0.11;    // how quickly the squeeze relaxes back to rest
+const MAX_SQ   = 0.055;   // ceiling: 5.5% vertical compression, never more
+const VEL_REF  = 1700;    // px/sec that reaches roughly full squeeze
+
+let scrollPos = useSmooth ? scrollY : scrollY;
+let lastPos   = scrollPos;
+let vel       = 0;
+
+function frame(){
+  const target = scrollY;                    // the only read; never forces layout
+
+  if(useSmooth){
+    scrollPos += (target - scrollPos) * EASE;
+    if(Math.abs(target - scrollPos) < 0.05) scrollPos = target;
+  } else {
+    scrollPos = target;
+  }
+
+  const raw = scrollPos - lastPos;
+  lastPos = scrollPos;
+  vel += (raw - vel) * VEL_EASE;
+
+  /* ---- writes only below this line ---- */
+  if(useSmooth) smooth.write(scrollPos);
+
+  if(!reduce && innerWidth > 900){
+    let s = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
+    s = s * s * (3 - 2 * s);                 // smoothstep: no abrupt onset
+    const squeeze = s * MAX_SQ;
+    const vh = innerHeight;
+
+    visible.forEach(i=>{
+      const g = geo[i];
+      if(!g) return;
+      const centre = g.top + g.h / 2 - scrollPos;
+      const d  = Math.max(-1, Math.min(1, (centre - vh/2) / vh));
+      const sy = 1 - squeeze * (0.78 + 0.22 * Math.abs(d));
+      const sx = 1 + squeeze * 0.26;         // keeps apparent mass constant
+      stages[i].style.transform = `scale3d(${sx.toFixed(4)},${sy.toFixed(4)},1)`;
+    });
+  }
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
 
 document.getElementById('backTop').addEventListener('click',e=>{
   e.preventDefault(); scrollTo({top:0,behavior:'smooth'});
