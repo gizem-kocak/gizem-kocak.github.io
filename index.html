@@ -655,17 +655,19 @@ addEventListener('resize', ()=>{ applyColumns(); requestAnimationFrame(measure);
 addEventListener('load',   ()=>requestAnimationFrame(measure));
 
 /* ---- tuning ---- */
-const EASE     = 0.09;    // how closely the page follows the real scroll
-const VEL_EASE = 0.11;    // how quickly the squeeze relaxes back to rest
-const MAX_SQ   = 0.055;   // ceiling: 5.5% vertical compression, never more
-const VEL_REF  = 1700;    // px/sec that reaches roughly full squeeze
+const EASE     = 0.09;   // how closely the page follows the real scroll
+const VEL_EASE = 0.12;   // how quickly the velocity term relaxes
+const POS_AMP  = 0.075;  // position squeeze: 7.5% at the viewport edges
+const VEL_AMP  = 0.030;  // velocity squeeze: up to a further 3% under speed
+const VEL_REF  = 1400;   // px/sec that reaches full velocity squeeze
+const DRIFT    = 14;     // px of counter-drift, for depth
 
-let scrollPos = useSmooth ? scrollY : scrollY;
+let scrollPos = scrollY;
 let lastPos   = scrollPos;
 let vel       = 0;
 
 function frame(){
-  const target = scrollY;                    // the only read; never forces layout
+  const target = scrollY;                 // the only read; never forces layout
 
   if(useSmooth){
     scrollPos += (target - scrollPos) * EASE;
@@ -678,23 +680,35 @@ function frame(){
   lastPos = scrollPos;
   vel += (raw - vel) * VEL_EASE;
 
-  /* ---- writes only below this line ---- */
+  /* ---------- writes only below this line ---------- */
   if(useSmooth) smooth.write(scrollPos);
 
   if(!reduce && innerWidth > 900){
-    let s = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
-    s = s * s * (3 - 2 * s);                 // smoothstep: no abrupt onset
-    const squeeze = s * MAX_SQ;
-    const vh = innerHeight;
+    const vh   = innerHeight;
+    const half = vh / 2;
+
+    // velocity term — adds weight to fast movement, relaxes at rest
+    let v = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
+    v = v * v * (3 - 2 * v);
+    const vSq = v * VEL_AMP;
 
     visible.forEach(i=>{
       const g = geo[i];
       if(!g) return;
+
+      // where this row sits in the viewport: 0 at centre, 1 at either edge.
+      // This is a continuous function of position, so ANY scroll changes it.
       const centre = g.top + g.h / 2 - scrollPos;
-      const d  = Math.max(-1, Math.min(1, (centre - vh/2) / vh));
-      const sy = 1 - squeeze * (0.78 + 0.22 * Math.abs(d));
-      const sx = 1 + squeeze * 0.26;         // keeps apparent mass constant
-      stages[i].style.transform = `scale3d(${sx.toFixed(4)},${sy.toFixed(4)},1)`;
+      const p = (centre - half) / (half * 1.35);   // softer falloff, less clamping
+      const t = Math.min(Math.abs(p), 1);
+      const eased = t * t;                      // gentle near centre
+
+      const sy = 1 - (POS_AMP * eased + vSq);
+      const sx = 1 + (POS_AMP * eased + vSq) * 0.22;   // apparent mass held
+      const dy = -p * DRIFT * eased;                   // slight counter-drift
+
+      stages[i].style.transform =
+        `translate3d(0,${dy.toFixed(2)}px,0) scale3d(${sx.toFixed(4)},${sy.toFixed(4)},1)`;
     });
   }
 
