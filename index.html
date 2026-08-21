@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gizem Koçak — Interior Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,340;9..144,440&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F5F0; --bg-soft:#EFEDE6;
+    --ink:#26241F; --ink-soft:#6B675D; --ink-faint:#9B968A;
+    --sage:#8E9A75; --sage-deep:#6E7A57; --oak:#C9AD85;
+    --line:#DBD7CB; --paper:#FFFEFB;
+    --edge: clamp(20px, 4vw, 56px);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{ font-family:'Fraunces',serif; font-weight:440; letter-spacing:-.01em; margin:0; }
+  a{color:inherit;text-decoration:none;}
+  img,svg{display:block;max-width:100%;}
+  button{font:inherit;background:none;border:none;color:inherit;cursor:pointer;}
+  .label{ font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); font-weight:500; }
+  ::selection{background:var(--sage);color:var(--paper);}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--sage-deep);outline-offset:4px;}
+
+  /* ---------- NAV ---------- */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:24px var(--edge);
+    transition:padding .4s ease,background .4s ease,box-shadow .4s ease;
+  }
+  header.scrolled{
+    padding:13px var(--edge);
+    background:rgba(246,245,240,.88);backdrop-filter:blur(10px);
+    box-shadow:0 1px 0 var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:11px;}
+  .mark{width:32px;height:32px;border-radius:50%;border:1px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-size:12px;flex-shrink:0;}
+  .brand-name{font-size:13px;letter-spacing:.06em;font-weight:500;}
+  nav.links{display:flex;gap:36px;}
+  nav.links a{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;position:relative;padding-bottom:3px;}
+  nav.links a::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--ink);
+    transform:scaleX(0);transform-origin:right;transition:transform .35s ease;}
+  nav.links a:hover::after{transform:scaleX(1);transform-origin:left;}
+  .ticker{font-size:11px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase;
+    display:flex;align-items:center;gap:8px;min-width:150px;justify-content:flex-end;}
+  .ticker-word{transition:opacity .4s ease;}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:0 var(--edge) 80px;overflow:hidden;}
+  .hero-wash{position:absolute;inset:0;z-index:-1;
+    background:radial-gradient(ellipse 60% 50% at 78% 18%,rgba(201,173,133,.28),transparent 60%),
+      radial-gradient(ellipse 70% 60% at 15% 85%,rgba(142,154,117,.18),transparent 65%),
+      linear-gradient(180deg,#FBFAF6 0%,var(--bg) 55%,var(--bg-soft) 100%);}
+  .hero-rays{position:absolute;inset:0;z-index:-1;opacity:.5;mix-blend-mode:overlay;
+    background-image:repeating-linear-gradient(115deg,transparent 0 68px,rgba(255,255,255,.55) 68px 70px);}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;padding-top:130px;margin-bottom:auto;}
+  .hero-index{text-align:right;}
+  .hero-name{font-size:clamp(58px,11vw,148px);line-height:.94;letter-spacing:-.02em;font-weight:340;}
+  .hero-name em{font-style:italic;font-weight:300;color:var(--sage-deep);}
+  .hero-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-top:36px;}
+  .hero-tagline{max-width:380px;font-size:15.5px;line-height:1.6;color:var(--ink-soft);}
+  .scroll-cue{display:flex;flex-direction:column;align-items:center;gap:10px;
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);flex-shrink:0;}
+  .scroll-cue .stem{width:1px;height:52px;background:var(--ink-faint);position:relative;overflow:hidden;}
+  .scroll-cue .stem::after{content:'';position:absolute;top:-52px;left:0;width:100%;height:52px;
+    background:var(--sage-deep);animation:drip 2.2s ease-in-out infinite;}
+  @keyframes drip{0%{top:-52px}60%{top:52px}100%{top:52px}}
+
+  .reveal{opacity:0;transform:translateY(26px);
+    transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  section{padding:130px var(--edge);position:relative;}
+  .section-inner{max-width:1320px;margin:0 auto;}
+
+  .intro{padding:70px var(--edge);}
+  .intro-grid{display:grid;grid-template-columns:190px 1fr;gap:56px;max-width:1320px;margin:0 auto;}
+  .intro-statement{font-size:clamp(25px,3.3vw,40px);line-height:1.28;font-weight:340;max-width:900px;}
+  .intro-statement .accent{color:var(--sage-deep);font-style:italic;}
+
+  /* ================= WORK LIST ================= */
+  .work-head{max-width:1320px;margin:0 auto 54px;padding:0 var(--edge);
+    display:flex;justify-content:space-between;align-items:baseline;gap:20px;flex-wrap:wrap;}
+  .work-head h2{font-size:clamp(30px,4vw,50px);font-weight:340;}
+  .work-note{font-size:11.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;}
+
+  #workList{ padding:0 var(--edge) 40px; }
+
+  .proj{
+    display:grid;
+    grid-template-columns:var(--colL,300px) var(--colC,1fr) var(--colR,0px);
+    gap:var(--gap,34px);
+    align-items:start;
+    margin-bottom:74px;
+    transition:grid-template-columns .85s cubic-bezier(.22,.85,.24,1), gap .85s cubic-bezier(.22,.85,.24,1);
+    will-change:transform;
+  }
+  /* scroll-driven liveliness applied to this inner wrapper */
+  .proj-motion{ display:contents; }
+
+  /* LEFT column — right aligned like BIG */
+  .proj-left{ text-align:right; padding-top:2px; }
+  .proj-icon{
+    width:44px;height:44px;background:var(--ink);border-radius:2px;
+    display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;
+  }
+  .proj-icon svg{width:62%;height:62%;stroke:var(--bg);}
+  .proj-title{font-family:'Fraunces',serif;font-size:clamp(17px,1.5vw,21px);font-weight:440;line-height:1.25;margin-bottom:5px;
+    transition:color .3s ease;}
+  .proj-loc{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-faint);}
+
+  .proj-facts{
+    margin-top:30px;
+    max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .85s cubic-bezier(.22,.85,.24,1),opacity .5s ease;
+  }
+  .proj.open .proj-facts{max-height:600px;opacity:1;transition:max-height .85s cubic-bezier(.22,.85,.24,1),opacity .6s ease .25s;}
+  .fact{margin-bottom:18px;}
+  .fact-l{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .fact-v{font-size:12.5px;line-height:1.4;text-transform:uppercase;letter-spacing:.02em;}
+  .proj-share{margin-top:34px;}
+  .proj-share .label{font-size:9px;margin-bottom:8px;display:block;}
+  .share-row{display:flex;gap:6px;justify-content:flex-end;}
+  .share-row a{width:18px;height:18px;background:var(--ink);color:var(--bg);border-radius:2px;
+    display:flex;align-items:center;justify-content:center;font-size:9px;transition:background .25s ease;}
+  .share-row a:hover{background:var(--sage-deep);}
+
+  /* CENTER image */
+  .proj-stage{ cursor:pointer; position:relative; overflow:hidden; border-radius:2px; }
+  .proj-stage .plate{
+    width:100%;
+    height:var(--imgH, 300px);
+    transition:height .85s cubic-bezier(.22,.85,.24,1);
+  }
+  .proj.open .proj-stage .plate{ height:var(--imgHopen, 600px); }
+  .proj-stage::after{
+    content:'View project';
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);
+    background:rgba(38,36,31,.82);color:#fff;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    padding:11px 20px;border-radius:100px;opacity:0;pointer-events:none;
+    transition:opacity .35s ease,transform .35s ease;
+  }
+  .proj-stage:hover::after{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .proj.open .proj-stage::after{content:'Close';}
+
+  /* RIGHT column — description */
+  .proj-right{
+    opacity:0;transform:translateX(-14px);
+    transition:opacity .6s ease,transform .7s cubic-bezier(.22,.85,.24,1);
+    overflow:hidden;
+  }
+  .proj.open .proj-right{opacity:1;transform:translateX(0);transition:opacity .7s ease .3s,transform .8s cubic-bezier(.22,.85,.24,1) .3s;}
+  .proj-right p{font-size:13px;line-height:1.68;color:var(--ink-soft);margin:0 0 15px;}
+
+  /* EXPANDED lower content: filmstrip + credits */
+  .proj-expand{
+    grid-column:1 / -1;
+    max-height:0;overflow:hidden;
+    transition:max-height .9s cubic-bezier(.22,.85,.24,1);
+  }
+  .proj.open .proj-expand{max-height:2200px;}
+  .expand-inner{padding-top:64px;}
+
+  /* filmstrip with peek slivers */
+  .strip-wrap{position:relative;margin-bottom:20px;}
+  .strip{
+    display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+    padding-bottom:14px; scrollbar-width:none;
+  }
+  .strip::-webkit-scrollbar{display:none;}
+  .strip .plate{
+    flex:0 0 auto;width:min(720px,68vw);height:min(420px,44vh);scroll-snap-align:center;
+  }
+  .strip-cap{
+    display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+    font-size:11.5px;color:var(--ink-soft);padding-top:6px;border-top:1px solid var(--line);
+  }
+  .strip-count{font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+
+  /* credits block */
+  .credits{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:30px;
+    margin-top:52px;padding-top:34px;border-top:1px solid var(--line);
+  }
+  .cred-l{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px;}
+  .cred-v{font-size:12.5px;line-height:1.75;}
+  .cred-v span{display:block;}
+
+  /* ---------- ART PLATES ---------- */
+  .plate{position:relative;border-radius:2px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .plate svg{width:38%;height:38%;opacity:.5;will-change:transform;}
+  .plate .tag{position:absolute;bottom:11px;right:13px;font-size:8.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:rgba(38,36,31,.36);}
+  .tone-sage{background:linear-gradient(140deg,#EDEFE5,#DCE0CE);}
+  .tone-oak{background:linear-gradient(140deg,#F3ECDF,#E4D3B6);}
+  .tone-stone{background:linear-gradient(140deg,#F1EFE9,#E0DCD0);}
+  .tone-blush{background:linear-gradient(140deg,#F4EEE9,#E9D9CD);}
+  .tone-slate{background:linear-gradient(140deg,#EAEDEC,#D3DAD6);}
+
+  /* ---------- PROCESS / ABOUT / FOOTER ---------- */
+  .process{background:var(--bg-soft);}
+  .process-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);margin-top:54px;}
+  .process-cell{background:var(--bg-soft);padding:40px 28px;}
+  .process-num{font-family:'Fraunces',serif;font-size:14px;color:var(--sage-deep);margin-bottom:24px;}
+  .process-cell h3{font-size:18px;margin-bottom:11px;}
+  .process-cell p{font-size:13px;line-height:1.65;color:var(--ink-soft);margin:0;}
+
+  .about-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;align-items:center;}
+  .about-portrait{aspect-ratio:4/5;}
+  .about-portrait svg{width:32%;height:32%;}
+  .about-quote{font-size:clamp(23px,2.7vw,33px);line-height:1.35;font-weight:340;margin-bottom:30px;}
+  .about-bio{font-size:14.5px;line-height:1.8;color:var(--ink-soft);max-width:520px;}
+  .about-bio+.about-bio{margin-top:15px;}
+
+  footer{padding:100px var(--edge) 46px;border-top:1px solid var(--line);}
+  .contact-grid{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;
+    max-width:1320px;margin:0 auto 80px;}
+  .contact-big{font-size:clamp(32px,6vw,80px);font-weight:340;max-width:680px;line-height:1.05;}
+  .contact-big a{border-bottom:1px solid var(--ink-faint);transition:color .3s ease,border-color .3s ease;}
+  .contact-big a:hover{color:var(--sage-deep);border-color:var(--sage-deep);}
+  .footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;
+    max-width:1320px;margin:0 auto;padding-top:28px;border-top:1px solid var(--line);
+    font-size:10.5px;color:var(--ink-faint);letter-spacing:.05em;}
+  .socials{display:flex;gap:24px;}
+  .socials a{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);}
+  .socials a:hover{color:var(--sage-deep);}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    nav.links{display:none;}
+    .ticker{min-width:0;}
+    .intro-grid{grid-template-columns:1fr;gap:22px;}
+    .proj{grid-template-columns:1fr !important;gap:16px !important;transform:none !important;}
+    .proj-left{text-align:left;}
+    .share-row{justify-content:flex-start;}
+    .proj-stage .plate{height:44vh !important;}
+    .strip .plate{width:86vw;height:38vh;}
+    .process-grid{grid-template-columns:1fr;}
+    .about-grid{grid-template-columns:1fr;}
+    .about-portrait{aspect-ratio:16/10;}
+    .hero-top{padding-top:118px;}
+    section{padding:90px var(--edge);}
+  }
+</style>
+</head>
+<body>
+
+<header id="siteHeader">
+  <div class="brand"><div class="mark">GK</div><div class="brand-name">GİZEM&nbsp;KOÇAK</div></div>
+  <nav class="links">
+    <a href="#work">Work</a><a href="#approach">Approach</a><a href="#about">About</a><a href="#contact">Contact</a>
+  </nav>
+  <div class="ticker"><span aria-hidden="true">✳</span><span class="ticker-word" id="tickerWord">Residential</span></div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-wash"></div><div class="hero-rays"></div>
+  <div class="hero-top">
+    <div class="label" style="max-width:220px">İç Mimarlık — Interior Architecture<br>Based in Istanbul, open to relocation</div>
+    <div class="label hero-index">Studio&nbsp;Projects<br>2022&nbsp;— 2026</div>
+  </div>
+  <div>
+    <h1 class="hero-name">Gizem<br><em>Koçak</em></h1>
+    <div class="hero-bottom">
+      <p class="hero-tagline">Interior architecture graduate working from concept through construction detail — across residential, hospitality, education, and cultural spaces.</p>
+      <div class="scroll-cue"><span>Scroll</span><span class="stem"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- INTRO -->
+<section class="intro">
+  <div class="intro-grid">
+    <div class="label reveal">Studio&nbsp;Note</div>
+    <p class="intro-statement reveal">A space works when the plan, the material, and the person <span class="accent">using</span> it are all solving the same problem.</p>
+  </div>
+</section>
+
+<!-- WORK -->
+<div id="work">
+  <div class="work-head reveal">
+    <h2>Studio Projects</h2>
+    <div class="work-note">Click any project to open it in place</div>
+  </div>
+  <div id="workList"></div>
+</div>
+
+<!-- APPROACH -->
+<section class="process" id="approach">
+  <div class="section-inner">
+    <div class="label reveal">How a Project Moves</div>
+    <h2 class="reveal" style="margin-top:14px;font-size:clamp(30px,4vw,50px);font-weight:340;">Approach</h2>
+    <div class="process-grid reveal">
+      <div class="process-cell"><div class="process-num">01</div><h3>Concept</h3><p>Reading the brief and the user before drawing anything — how a space will actually be moved through and lived in.</p></div>
+      <div class="process-cell"><div class="process-num">02</div><h3>Material</h3><p>Moodboards and material studies tested against real constraints — cost, durability, and how a surface ages.</p></div>
+      <div class="process-cell"><div class="process-num">03</div><h3>Detail &amp; FF&amp;E</h3><p>Technical drawing, furniture, and lighting resolved together, down to ergonomics and construction detail.</p></div>
+      <div class="process-cell"><div class="process-num">04</div><h3>Context</h3><p>Sustainability and heritage held in mind from the start — reuse, restoration, and building systems, not afterthoughts.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-inner about-grid">
+    <div class="about-portrait plate tone-sage reveal">
+      <svg viewBox="0 0 100 100" fill="none" stroke="#26241F" stroke-width="1"><circle cx="50" cy="38" r="16"/><path d="M22 82 Q22 58 50 58 Q78 58 78 82"/></svg>
+      <span class="tag">Portrait&nbsp;pending</span>
+    </div>
+    <div class="reveal">
+      <p class="about-quote">"I like a project best when the material, the plan, and the person using the room are all solving the same problem."</p>
+      <p class="about-bio">Gizem Koçak is an interior architect graduating from Mimar Sinan Fine Arts University in Istanbul, with a GPA of 3.33/4.00. Her studio work moves comfortably from concept and space planning through to technical drawing and detailing, with a particular interest in sustainable design, material honesty, furniture design, and visual merchandising across residential, commercial, and institutional projects.</p>
+      <p class="about-bio">Practical experience spans both a design-office internship — concept development, technical drawing, and material board preparation — and a construction-site internship following interior implementation work in the field against the original drawings.</p>
+      <div class="credits" style="margin-top:38px;">
+        <div><div class="cred-l">Education</div><div class="cred-v"><span>Mimar Sinan Fine Arts University</span><span>B.A. Interior Architecture, 2020–2026</span><span>GPA 3.33 / 4.00</span><span>Thesis — Art History Library</span></div></div>
+        <div><div class="cred-l">Experience</div><div class="cred-v"><span>Design Office Intern, Istanbul</span><span>Construction Site Intern, Istanbul</span></div></div>
+        <div><div class="cred-l">Software</div><div class="cred-v"><span>AutoCAD · SketchUp</span><span>3ds Max · Rhino</span><span>D5 Render · Photoshop</span></div></div>
+        <div><div class="cred-l">Languages</div><div class="cred-v"><span>Turkish — Native</span><span>English — B1</span><span>German — A2</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="contact">
+  <div class="contact-grid reveal">
+    <h2 class="contact-big">Open to studio roles and freelance interior projects. <a href="mailto:gizemkck16@gmail.com">Get in touch →</a></h2>
+    <div class="label">Istanbul, Türkiye<br>gizemkck16@gmail.com<br>+90 553 307 64 29</div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 Gizem Koçak</div>
+    <div class="socials"><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="#">Behance</a></div>
+    <a href="#" id="backTop" style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)">Back to top</a>
+  </div>
+</footer>
+
+<script>
+/* ============ DATA ============ */
+const ICONS = {
+  house:'<path d="M20 70 L20 40 L50 20 L80 40 L80 70 Z"/><path d="M40 70 L40 50 L60 50 L60 70"/>',
+  grid:'<rect x="15" y="30" width="70" height="40"/><line x1="15" y1="45" x2="85" y2="45"/><line x1="35" y1="45" x2="35" y2="70"/><line x1="65" y1="45" x2="65" y2="70"/>',
+  gable:'<path d="M15 78 L15 45 L50 22 L85 45 L85 78 Z"/><rect x="42" y="55" width="16" height="23"/>',
+  cups:'<rect x="20" y="35" width="60" height="35"/><circle cx="35" cy="52" r="6"/><circle cx="65" cy="52" r="6"/>',
+  frame:'<rect x="18" y="22" width="64" height="56"/><line x1="18" y1="50" x2="82" y2="50"/>',
+  stair:'<rect x="30" y="40" width="40" height="8"/><rect x="35" y="55" width="30" height="8"/><rect x="40" y="70" width="20" height="8"/>',
+  arch:'<path d="M25 75 Q25 50 50 50 Q75 50 75 75"/><line x1="50" y1="50" x2="50" y2="30"/>',
+  table:'<ellipse cx="50" cy="55" rx="28" ry="14"/><line x1="50" y1="41" x2="50" y2="20"/>',
+  slats:'<line x1="20" y1="30" x2="20" y2="80"/><line x1="32" y1="30" x2="32" y2="80"/><line x1="44" y1="30" x2="44" y2="80"/><line x1="56" y1="30" x2="56" y2="80"/><line x1="68" y1="30" x2="68" y2="80"/>',
+  win:'<rect x="20" y="25" width="60" height="50"/><line x1="20" y1="45" x2="80" y2="45"/><line x1="50" y1="25" x2="50" y2="75"/>',
+  lamp:'<circle cx="50" cy="38" r="14"/><line x1="50" y1="52" x2="50" y2="80"/>',
+  sect:'<line x1="15" y1="80" x2="85" y2="80"/><line x1="25" y1="80" x2="25" y2="30"/><line x1="45" y1="80" x2="45" y2="20"/><line x1="65" y1="80" x2="65" y2="35"/>',
+  bottle:'<path d="M44 24 h12 v10 h-12 z"/><rect x="36" y="34" width="28" height="42" rx="3"/><line x1="36" y1="50" x2="64" y2="50"/>',
+  blocks:'<rect x="18" y="52" width="20" height="20"/><rect x="42" y="40" width="24" height="32"/><rect x="70" y="56" width="14" height="16"/>',
+  leaf:'<path d="M50 18 C72 30 72 62 50 82 C28 62 28 30 50 18 Z"/><line x1="50" y1="20" x2="50" y2="80"/>',
+  book:'<path d="M20 28 Q50 18 50 28 L50 76 Q50 66 20 76 Z"/><path d="M80 28 Q50 18 50 28 L50 76 Q50 66 80 76 Z"/>'
+};
+const TONES = ['tone-sage','tone-oak','tone-stone','tone-blush','tone-slate'];
+
+const PROJECTS = [
+  { id:'p1', icon:'bottle', tone:'tone-blush', title:'Perfume Store Interior', loc:'Istanbul, Türkiye',
+    program:'Retail — Store Design', studio:'2nd Year Studio', year:'2022', software:'AutoCAD, SketchUp, D5 Render', status:'Academic Studio Project',
+    focus:'Visual merchandising, Lighting design',
+    text:['A concept store built around scent as the organising idea rather than the shelf plan — display fixtures are arranged as a slow route through fragrance families, not a wall of stock facing the door.',
+          'Materials stay warm and low-reflectance so the bottles read as the brightest thing in the room: brushed brass fittings, a soft plaster wall, and lighting pulled tight and low to feel closer to a dressing table than a shopfront.'],
+    strip:[ {icon:'bottle',tone:'tone-stone',cap:'PLAN — A route through scent families rather than a wall of stock at the entrance.'},
+            {icon:'lamp',tone:'tone-oak',cap:'LIGHT — Fixtures pulled low and warm, closer to a dressing table than a shopfront.'},
+            {icon:'frame',tone:'tone-blush',cap:'DISPLAY — Brass and plaster keep the bottles as the brightest surface in the room.'} ] },
+
+  { id:'p2', icon:'house', tone:'tone-sage', title:'Private Residence', loc:'Istanbul, Türkiye',
+    program:'Residential — Private Residence', studio:'2nd Year Studio', year:'2022', software:'AutoCAD, SketchUp, 3ds Max', status:'Academic Studio Project',
+    focus:'Space organization, Ergonomic design',
+    text:['A custom residential brief for a single family, worked from room organisation up rather than finish down — every plan option was tested first against how the household actually moves through a day before any material was chosen.',
+          'The result keeps circulation deliberately generous at the expense of a room or two — the brief treated ease of movement and daylight access as fixed requirements, not variables to trade away for extra square metres.'],
+    strip:[ {icon:'win',tone:'tone-oak',cap:'PLAN — Circulation tested first, rooms sized around it rather than the reverse.'},
+            {icon:'table',tone:'tone-stone',cap:'FURNITURE — Built-in pieces sized directly to the family\'s ergonomic brief.'},
+            {icon:'lamp',tone:'tone-sage',cap:'LIGHT — Daylight access held as a fixed requirement through every plan revision.'} ] },
+
+  { id:'p3', icon:'blocks', tone:'tone-oak', title:'Kindergarten', loc:'Istanbul, Türkiye',
+    program:'Education — Kindergarten', studio:'3rd Year Studio', year:'2023', software:'AutoCAD, SketchUp, D5 Render', status:'Academic Studio Project',
+    focus:'Universal design, Ergonomic design',
+    text:['A kindergarten designed at a child\'s scale first — sightlines, door handles, and seating heights were all set against a five-year-old\'s reach before an adult\'s, then checked back against supervision and safety.',
+          'Colour and material are used sparingly and specifically: soft, washable surfaces at contact height, and a calmer, more neutral palette above it, so the room reads as playful without becoming visually overwhelming by the end of the day.'],
+    strip:[ {icon:'blocks',tone:'tone-sage',cap:'SCALE — Reach, seat height, and sightlines set against a five-year-old first.'},
+            {icon:'arch',tone:'tone-blush',cap:'SAFETY — Soft, washable materials held to contact height throughout.'},
+            {icon:'win',tone:'tone-stone',cap:'COLOUR — Playful at low level, calmer above it, to avoid overstimulation.'} ] },
+
+  { id:'p4', icon:'leaf', tone:'tone-stone', title:'Nature Hotel', loc:'Türkiye',
+    program:'Hospitality — Boutique Hotel', studio:'3rd Year Studio', year:'2024', software:'Rhino, SketchUp, D5 Render', status:'Academic Studio Project',
+    focus:'Sustainable design, Material knowledge',
+    text:['A small boutique hotel sited to keep the surrounding landscape as the main material of the project — rooms are oriented outward before they\'re detailed inward, and public spaces are sequenced as a slow release from arrival toward the view.',
+          'Material choices favour local, low-processed options — timber, stone, and natural fibre finishes selected as much for how they weather outdoors as for how they read in a render.'],
+    strip:[ {icon:'leaf',tone:'tone-oak',cap:'SITE — Rooms oriented to the landscape before the interior is detailed.'},
+            {icon:'gable',tone:'tone-sage',cap:'MATERIAL — Timber and stone selected for weathering, not just first appearance.'},
+            {icon:'win',tone:'tone-blush',cap:'SEQUENCE — Arrival to view staged as a slow release through the public rooms.'} ] },
+
+  { id:'p5', icon:'sect', tone:'tone-slate', title:'Coworking Complex', loc:'Istanbul, Türkiye',
+    program:'Commercial & Mixed-Use — Coworking', studio:'4th Year Studio', year:'2025', software:'AutoCAD, Rhino, D5 Render', status:'Academic Studio Project',
+    focus:'Adaptive reuse, Acoustics',
+    text:['A coworking complex proposed inside a disused industrial shell, developed alongside coursework on reusing abandoned industrial heritage rather than as a purely new-build exercise — the existing structure set most of the early planning decisions.',
+          'New floors and partitions sit independently of the original frame so the building\'s own structure stays legible, with acoustic treatment doing the work that a fully enclosed office plan would otherwise need walls for.'],
+    strip:[ {icon:'sect',tone:'tone-oak',cap:'STRUCTURE — New floors sit independent of the original industrial frame.'},
+            {icon:'grid',tone:'tone-slate',cap:'PLAN — Open-plan zones tuned by acoustic treatment rather than partition walls.'},
+            {icon:'slats',tone:'tone-sage',cap:'REUSE — Existing shell driven early planning decisions ahead of any new material.'} ] },
+
+  { id:'p6', icon:'book', tone:'tone-sage', title:'Art History Library', loc:'Istanbul, Türkiye',
+    program:'Cultural — Art History Library', studio:'Thesis Project', year:'2026', software:'Rhino, D5 Render, AutoCAD', status:'Thesis Project',
+    focus:'Museum interior design, Conservation & restoration',
+    text:['Graduation thesis project: a library dedicated to art history housed within a building carrying its own heritage value — the brief sat directly at the intersection of two coursework threads, contemporary museum interior approaches and conservation and restoration practice.',
+          'Reading spaces and archive storage were resolved with contrasting requirements in mind — daylight and comfort for one, tight environmental control for the other — while keeping the intervention reversible against the host building\'s original fabric.'],
+    strip:[ {icon:'book',tone:'tone-oak',cap:'READING HALL — Daylight and comfort prioritised for the public reading spaces.'},
+            {icon:'frame',tone:'tone-stone',cap:'ARCHIVE — Environmental control tightened for the collection storage areas.'},
+            {icon:'arch',tone:'tone-blush',cap:'HERITAGE — Intervention detailed to stay reversible against the host building.'} ] }
+];
+
+/* ============ RENDER ============ */
+function plate(icon,tone,tag){
+  return `<div class="plate ${tone}">
+    <svg viewBox="0 0 100 100" fill="none" stroke="#26241F" stroke-width="1.1">${ICONS[icon]}</svg>
+    <span class="tag">${tag||'Photography&nbsp;pending'}</span></div>`;
+}
+
+const list = document.getElementById('workList');
+list.innerHTML = PROJECTS.map(p=>`
+  <article class="proj" data-proj id="${p.id}">
+    <div class="proj-left">
+      <div class="proj-icon"><svg viewBox="0 0 100 100" fill="none" stroke-width="4">${ICONS[p.icon]}</svg></div>
+      <h3 class="proj-title">${p.title}</h3>
+      <div class="proj-loc">${p.loc}</div>
+      <div class="proj-facts">
+        <div class="fact"><div class="fact-l">Program</div><div class="fact-v">${p.program}</div></div>
+        <div class="fact"><div class="fact-l">Studio</div><div class="fact-v">${p.studio} · ${p.year}</div></div>
+        <div class="fact"><div class="fact-l">Software</div><div class="fact-v">${p.software}</div></div>
+        <div class="fact"><div class="fact-l">Status</div><div class="fact-v">${p.status}</div></div>
+        <div class="proj-share">
+          <span class="label">Share</span>
+          <div class="share-row">
+            <a href="mailto:?subject=${encodeURIComponent(p.title)}" aria-label="Share by email">✉</a>
+            <a href="#" aria-label="Share on LinkedIn">in</a>
+            <a href="#" aria-label="Share on Pinterest">P</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proj-stage" data-stage role="button" tabindex="0" aria-expanded="false" aria-controls="${p.id}-x">
+      ${plate(p.icon,p.tone)}
+    </div>
+
+    <div class="proj-right">${p.text.map(t=>`<p>${t}</p>`).join('')}</div>
+
+    <div class="proj-expand" id="${p.id}-x">
+      <div class="expand-inner">
+        <div class="strip-wrap">
+          <div class="strip" data-strip>${p.strip.map(s=>plate(s.icon,s.tone)).join('')}</div>
+          <div class="strip-cap">
+            <span data-cap>${p.strip[0].cap}</span>
+            <span class="strip-count" data-count>01 / ${String(p.strip.length).padStart(2,'0')}</span>
+          </div>
+        </div>
+        <div class="credits">
+          <div><div class="cred-l">University</div><div class="cred-v"><span>Mimar Sinan Fine Arts University</span><span>Faculty of Architecture, Istanbul</span></div></div>
+          <div><div class="cred-l">Coursework Focus</div><div class="cred-v"><span>${p.focus}</span></div></div>
+          <div><div class="cred-l">Authorship</div><div class="cred-v"><span>Individual studio project</span></div></div>
+          <div><div class="cred-l">Visuals</div><div class="cred-v"><span>Renders pending upload</span></div></div>
+        </div>
+      </div>
+    </div>
+  </article>
+`).join('');
+
+/* ============ HEADER + TICKER ============ */
+const header = document.getElementById('siteHeader');
+addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>40),{passive:true});
+
+const WORDS=['Residential','Retail','Education','Hospitality','Cultural','Istanbul','Sustainable','Ergonomics','Concept'];
+let wi=0; const tw=document.getElementById('tickerWord');
+setInterval(()=>{ tw.style.opacity=0;
+  setTimeout(()=>{ wi=(wi+1)%WORDS.length; tw.textContent=WORDS[wi]; tw.style.opacity=1; },400);
+},2600);
+
+/* ============ REVEALS ============ */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ============ EXPAND / COLLAPSE IN PLACE ============ */
+const projects=Array.from(document.querySelectorAll('[data-proj]'));
+
+function toggle(proj){
+  const open = proj.classList.toggle('open');
+  proj.querySelector('[data-stage]').setAttribute('aria-expanded',String(open));
+  if(open){
+    // anchor scroll so the project's top stays put as it grows
+    const before = proj.getBoundingClientRect().top;
+    requestAnimationFrame(()=>{
+      const after = proj.getBoundingClientRect().top;
+      if(Math.abs(after-before)>2) scrollBy(0, after-before);
+    });
+  }
+}
+projects.forEach(proj=>{
+  const stage=proj.querySelector('[data-stage]');
+  stage.addEventListener('click',()=>toggle(proj));
+  stage.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(proj);}
+  });
+  proj.querySelector('.proj-left').addEventListener('click',e=>{
+    if(e.target.closest('a')) return;
+    toggle(proj);
+  });
+  proj.querySelector('.proj-left').style.cursor='pointer';
+
+  // filmstrip caption sync
+  const strip=proj.querySelector('[data-strip]');
+  const cap=proj.querySelector('[data-cap]');
+  const count=proj.querySelector('[data-count]');
+  const data=PROJECTS.find(p=>p.id===proj.id);
+  strip.addEventListener('scroll',()=>{
+    const plates=Array.from(strip.children);
+    const mid=strip.scrollLeft+strip.clientWidth/2;
+    let idx=0,best=Infinity;
+    plates.forEach((el,i)=>{
+      const c=el.offsetLeft+el.offsetWidth/2;
+      if(Math.abs(c-mid)<best){best=Math.abs(c-mid);idx=i;}
+    });
+    cap.textContent=data.strip[idx].cap;
+    count.textContent=`${String(idx+1).padStart(2,'0')} / ${String(data.strip.length).padStart(2,'0')}`;
+  },{passive:true});
+});
+
+/* ============ LIVELY SCROLL-DRIVEN LAYOUT ============ */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let ticking=false, active=false;
+
+function layout(){
+  if(!active){ticking=false;return;}
+  const mobile = innerWidth<=900;
+  const vh = innerHeight;
+
+  projects.forEach(proj=>{
+    if(mobile||reduce){
+      proj.style.cssText=''; return;
+    }
+    const r=proj.getBoundingClientRect();
+    const stage=proj.querySelector('.proj-stage');
+    const sr=stage.getBoundingClientRect();
+    const center=sr.top+sr.height/2;
+
+    // 0 at viewport edges, 1 at viewport centre
+    let focus = 1 - Math.min(Math.abs(center - vh/2)/(vh*0.72), 1);
+    focus = focus*focus*(3-2*focus); // smoothstep
+
+    const isOpen = proj.classList.contains('open');
+
+    if(isOpen){
+      proj.style.setProperty('--colL','clamp(190px,17vw,250px)');
+      proj.style.setProperty('--colC','minmax(0,1fr)');
+      proj.style.setProperty('--colR','clamp(200px,20vw,300px)');
+      proj.style.setProperty('--gap','clamp(26px,3vw,48px)');
+      proj.style.setProperty('--imgHopen', `${Math.round(430 + focus*180)}px`);
+      proj.style.transform='none';
+    } else {
+      // collapsed rows breathe: narrower at the edges, wider at centre
+      const colC = 420 + focus*300;             // image column grows toward centre
+      const colL = 300 - focus*40;              // label column tightens slightly
+      proj.style.setProperty('--colL',`${colL}px`);
+      proj.style.setProperty('--colC',`${colC}px`);
+      proj.style.setProperty('--colR','0px');
+      proj.style.setProperty('--gap',`${34 + focus*10}px`);
+      proj.style.setProperty('--imgH',`${Math.round(250 + focus*180)}px`);
+      // gentle horizontal drift + lift, the "alive" quality
+      const drift = (1-focus)*26;
+      proj.style.transform=`translate3d(${drift}px, ${(1-focus)*10}px, 0)`;
+      proj.style.opacity = 0.55 + focus*0.45;
+    }
+
+    // inner icon parallax
+    const svg=stage.querySelector('svg');
+    if(svg){
+      const p=(vh/2-center)/vh;
+      svg.style.transform=`translateY(${(p*34).toFixed(1)}px) scale(${(1+focus*0.06).toFixed(3)})`;
+    }
+  });
+  requestAnimationFrame(layout);
+}
+
+const workIO=new IntersectionObserver(es=>es.forEach(e=>{
+  active=e.isIntersecting;
+  if(active&&!ticking){ticking=true;requestAnimationFrame(layout);}
+  if(!active)ticking=false;
+}),{threshold:0});
+workIO.observe(document.getElementById('work'));
+
+addEventListener('resize',()=>{ if(innerWidth<=900) projects.forEach(p=>p.style.cssText=''); });
+
+document.getElementById('backTop').addEventListener('click',e=>{
+  e.preventDefault(); scrollTo({top:0,behavior:'smooth'});
+});
+</script>
+</body>
+</html>
