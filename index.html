@@ -155,6 +155,9 @@
   .proj{ --slotH: clamp(230px, 24vw, 330px); }
   .proj.open{ --slotH: clamp(460px, 52vw, 720px); }
 
+  .proj.open .proj-stage{ cursor:grab; touch-action:pan-y; }
+  .proj.open .proj-stage:active{ cursor:grabbing; }
+  .proj.open .gal-slide .plate{ user-select:none; -webkit-user-drag:none; }
   .proj-stage{
     cursor:pointer; position:relative;
     height:var(--slotH);
@@ -336,7 +339,7 @@
 <section class="hero">
   <div class="hero-wash"></div><div class="hero-rays"></div>
   <div class="hero-top">
-    <div class="label" style="max-width:220px">İç Mimar — Interior Architect<br>Based in Istanbul</div>
+    <div class="label" style="max-width:220px">İç Mimarlık — Interior Architecture<br>Based in Istanbul, open to relocation</div>
     <div class="label hero-index">Studio&nbsp;Projects<br>2022&nbsp;— 2026</div>
   </div>
   <div>
@@ -620,12 +623,12 @@ function toggle(proj){
 
 projects.forEach(proj=>{
   const stage=proj.querySelector('[data-stage]');
-  stage.addEventListener('click',()=>toggle(proj));
+  stage.addEventListener('click',()=>{ if(proj._dragMoved) return; toggle(proj); });
   stage.addEventListener('keydown',e=>{
     if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(proj);}
   });
   proj.querySelector('.proj-left').addEventListener('click',e=>{
-    if(e.target.closest('a')) return;
+    if(e.target.closest('a') || proj._dragMoved) return;
     toggle(proj);
   });
   proj.querySelector('.proj-left').style.cursor='pointer';
@@ -643,6 +646,7 @@ projects.forEach(proj=>{
   const caps     = [data.coverCap].concat(data.strip.map(x=>x.cap));
   let   gi       = 0;
   let   metrics  = null;      // {slideW, gap} — cached, never read mid-animation
+  let   pitch    = 1;         // slideW + gap, i.e. one step of the row
 
   // the open layout is fully determined by the CSS clamps, so it can be
   // derived without reading a half-finished transition
@@ -695,26 +699,85 @@ projects.forEach(proj=>{
     const slideW = open && metrics ? metrics.slideW : crop.clientWidth;
     const gap    = open && metrics ? metrics.gap    : 0;
 
-    const shift = -gi * (slideW + gap);
-    track.style.transform = `translate3d(${shift.toFixed(1)}px,0,0)`;
-    // the whole open project travels as one row — metadata, images and
-    // description together — so nothing ever overlaps as it advances
-    const glide = 'transform .8s cubic-bezier(.22,.9,.24,1), opacity .7s ease';
-    if(desc){
-      desc.style.transition = glide;
-      desc.style.transform  = open ? `translate3d(${shift.toFixed(1)}px,0,0)` : '';
-    }
-    const meta = proj.querySelector('.proj-left');
-    if(meta){
-      meta.style.transition = glide;
-      meta.style.transform  = open ? `translate3d(${shift.toFixed(1)}px,0,0)` : '';
-      meta.style.opacity    = open && gi > 0 ? '0' : '';
-    }
+    pitch = slideW + gap;
+    setShift(open ? -gi * pitch : 0, true, open);
     cap.textContent = caps[gi];
     count.innerHTML = `<b>${String(gi+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
     gPrev.disabled = gi<=0;
     gNext.disabled = gi>=slides.length-1;
   }
+  /* ---- one place that moves the row: metadata, images and description ---- */
+  const GLIDE = 'transform .8s cubic-bezier(.22,.9,.24,1), opacity .7s ease';
+  function setShift(px, animate, open){
+    const t = animate ? GLIDE : 'none';
+    const v = `translate3d(${px.toFixed(1)}px,0,0)`;
+    track.style.transition = animate ? 'transform .8s cubic-bezier(.22,.9,.24,1)' : 'none';
+    track.style.transform  = v;
+    const desc = proj.querySelector('.proj-right');
+    if(desc){ desc.style.transition = t; desc.style.transform = open ? v : ''; }
+    const meta = proj.querySelector('.proj-left');
+    if(meta){
+      meta.style.transition = t;
+      meta.style.transform  = open ? v : '';
+      meta.style.opacity    = open ? String(Math.max(0, 1 - Math.abs(px)/(pitch*0.55||1))) : '';
+    }
+  }
+
+  /* ---- drag to swipe: the row follows the pointer, then settles ---- */
+  let dragging=false, dragX=0, dragY=0, baseShift=0, axis=null;
+  proj._dragMoved = false;
+
+  function onDown(e){
+    if(!proj.classList.contains('open')) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    dragging = true; axis = null; proj._dragMoved = false;
+    dragX = e.clientX; dragY = e.clientY;
+    baseShift = -gi * pitch;
+    stageEl.style.cursor = 'grabbing';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const dx = e.clientX - dragX, dy = e.clientY - dragY;
+    if(axis === null){
+      if(Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      // any real movement counts as a drag, so it never lands as a click
+      proj._dragMoved = true;
+      if(axis === 'y'){ dragging = false; stageEl.style.cursor=''; return; }  // let the page scroll
+    }
+    proj._dragMoved = true;
+    if(e.cancelable) e.preventDefault();
+    let px = baseShift + dx;
+    const min = -(slidesCount()-1) * pitch, max = 0;
+    // resist past the ends rather than stopping dead
+    if(px > max) px = max + (px - max) * 0.3;
+    if(px < min) px = min + (px - min) * 0.3;
+    setShift(px, false, true);
+  }
+  function onUp(e){
+    // always clear the drag flag, even for a vertical gesture that was
+    // handed back to the page — otherwise the release lands as a click
+    if(proj._dragMoved) setTimeout(()=>{ proj._dragMoved = false; }, 80);
+    if(!dragging){ axis = null; return; }
+    dragging = false;
+    stageEl.style.cursor = '';
+    if(axis !== 'x'){ axis = null; return; }
+    const dx = e.clientX - dragX;
+    // a short flick is enough; otherwise settle to whichever is nearest
+    let target = gi;
+    if(Math.abs(dx) > pitch * 0.16) target = gi - Math.sign(dx);
+    else target = Math.round((-(baseShift + dx)) / pitch);
+    gi = Math.max(0, Math.min(target, slidesCount()-1));
+    axis = null;
+    renderGallery();
+  }
+  function slidesCount(){ return slides.length; }
+
+  stageEl.addEventListener('pointerdown', onDown);
+  addEventListener('pointermove', onMove, {passive:false});
+  addEventListener('pointerup', onUp);
+  addEventListener('pointercancel', onUp);
+
   proj._gallery = {
     refine(){ if(proj.classList.contains('open')) measureMetrics(); },
     step(d){
@@ -728,20 +791,6 @@ projects.forEach(proj=>{
   };
   gPrev.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(-1); });
   gNext.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(1); });
-
-  // swipe across the image row
-  let gx=0, gy=0;
-  stageEl.addEventListener('touchstart', e=>{
-    gx=e.changedTouches[0].clientX; gy=e.changedTouches[0].clientY;
-  }, {passive:true});
-  stageEl.addEventListener('touchend', e=>{
-    if(!proj.classList.contains('open')) return;
-    const dx=e.changedTouches[0].clientX-gx, dy=e.changedTouches[0].clientY-gy;
-    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4){
-      proj._gallery.step(dx<0?1:-1);
-      e.stopPropagation();
-    }
-  }, {passive:true});
 
   renderGallery();
   addEventListener('resize', ()=>renderGallery(true), {passive:true});
