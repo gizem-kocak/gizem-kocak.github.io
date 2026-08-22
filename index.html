@@ -580,7 +580,7 @@ function toggle(proj){
   if(typeof openedAt !== 'undefined') openedAt = open ? scrollPos : null;
 
   // reset the image row whenever the open state changes
-  if(proj._gallery) requestAnimationFrame(()=>proj._gallery.render());
+  if(proj._gallery) requestAnimationFrame(()=>proj._gallery.render(true));
 
   if(open){
     // bring the opened project's image to the centre of the screen, tracking
@@ -596,7 +596,7 @@ function toggle(proj){
       // where it was clicked, so the centring scroll doesn't shrink it
       if(typeof openedAt !== 'undefined') openedAt = scrollPos;
       if(performance.now() - t0 < 900) requestAnimationFrame(centre);
-      else if(proj._gallery) proj._gallery.render();
+      else if(proj._gallery) proj._gallery.render(true);
     };
     requestAnimationFrame(centre);
   } else if(typeof startAnchor === 'function'){
@@ -638,21 +638,53 @@ projects.forEach(proj=>{
   const data     = PROJECTS.find(x=>x.id===proj.id);
   const caps     = [data.coverCap].concat(data.strip.map(x=>x.cap));
   let   gi       = 0;
+  let   metrics  = null;      // {slideW, gap} — cached, never read mid-animation
 
-  function renderGallery(){
+  function measureMetrics(){
+    const desc = proj.querySelector('.proj-right');
+    if(!proj.classList.contains('open') || !desc){ metrics = null; return; }
+    // measure with the transition and transform suppressed, so the column is
+    // read at its true resting position rather than part-way through a slide
+    const prevT = desc.style.transition, prevX = desc.style.transform;
+    desc.style.transition = 'none';
+    desc.style.transform  = 'none';
+    void desc.offsetWidth;                       // force the reset to apply
+    const cropX = crop.getBoundingClientRect().left;
+    const r     = desc.getBoundingClientRect();
+    metrics = {
+      slideW: Math.max(r.left - cropX - 34, 280),
+      gap:    r.width + 68                       // the description lives here
+    };
+    desc.style.transform  = prevX;
+    desc.style.transition = prevT;
+    proj.style.setProperty('--slideW', metrics.slideW + 'px');
+    proj.style.setProperty('--galGap', metrics.gap + 'px');
+  }
+
+  function renderGallery(remeasure){
     const open = proj.classList.contains('open');
-    if(!open) gi = 0;
-    let slideW = crop.clientWidth, gap = 0;
-    if(open){
-      // measured once per open/resize/step — never inside the scroll loop
-      const cropX = crop.getBoundingClientRect().left;
-      const right = proj.querySelector('.proj-right').getBoundingClientRect();
-      slideW = Math.max(right.left - cropX - 34, 280);
-      gap    = right.width + 68;          // the description lives in this gap
-      proj.style.setProperty('--slideW', slideW + 'px');
-      proj.style.setProperty('--galGap', gap + 'px');
+    if(!open){ gi = 0; metrics = null; }
+    if(open && (remeasure || !metrics)) measureMetrics();
+
+    const desc   = proj.querySelector('.proj-right');
+    const slideW = open && metrics ? metrics.slideW : crop.clientWidth;
+    const gap    = open && metrics ? metrics.gap    : 0;
+
+    const shift = -gi * (slideW + gap);
+    track.style.transform = `translate3d(${shift.toFixed(1)}px,0,0)`;
+    // the whole open project travels as one row — metadata, images and
+    // description together — so nothing ever overlaps as it advances
+    const glide = 'transform .8s cubic-bezier(.22,.9,.24,1), opacity .7s ease';
+    if(desc){
+      desc.style.transition = glide;
+      desc.style.transform  = open ? `translate3d(${shift.toFixed(1)}px,0,0)` : '';
     }
-    track.style.transform = `translate3d(${(-gi*(slideW+gap)).toFixed(1)}px,0,0)`;
+    const meta = proj.querySelector('.proj-left');
+    if(meta){
+      meta.style.transition = glide;
+      meta.style.transform  = open ? `translate3d(${shift.toFixed(1)}px,0,0)` : '';
+      meta.style.opacity    = open && gi > 0 ? '0' : '';
+    }
     cap.textContent = caps[gi];
     count.innerHTML = `<b>${String(gi+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
     gPrev.disabled = gi<=0;
@@ -665,8 +697,8 @@ projects.forEach(proj=>{
       if(n<0 || n>=slides.length) return false;
       gi = n; renderGallery(); return true;
     },
-    reset(){ gi = 0; renderGallery(); },
-    render: renderGallery
+    reset(){ gi = 0; renderGallery(true); },
+    render(force){ renderGallery(force); }
   };
   gPrev.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(-1); });
   gNext.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(1); });
@@ -686,7 +718,7 @@ projects.forEach(proj=>{
   }, {passive:true});
 
   renderGallery();
-  addEventListener('resize', renderGallery, {passive:true});
+  addEventListener('resize', ()=>renderGallery(true), {passive:true});
 
   // explicit project-to-project buttons
   proj.querySelector('[data-proj-prev]').addEventListener('click', e=>{ e.stopPropagation(); goToProject(-1); });
@@ -744,8 +776,11 @@ let   geo     = [];
 const visible = new Set();
 let   smooth  = null;
 
+let workTop = 0;
 function measure(){
   geo = projects.map(p=>({ top:p.offsetTop, h:p.offsetHeight }));
+  const wh = document.querySelector('.work-head');
+  workTop = wh ? wh.offsetTop : 0;
   if(smooth) smooth.measure();
 }
 
@@ -855,6 +890,14 @@ function frame(){
   // normalised speed, then eased so the onset is never abrupt
   let sp = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
   sp = sp * sp * (3 - 2 * sp);
+
+  // the effect is gated: nothing compresses until the Studio Projects
+  // heading has reached the top of the screen. A short ramp avoids the
+  // effect switching on abruptly at the boundary.
+  let gate = (scrollPos - workTop) / 140;
+  gate = gate < 0 ? 0 : (gate > 1 ? 1 : gate);
+  gate = gate * gate * (3 - 2 * gate);
+  sp *= gate;
 
   // the compression carries its own inertia in BOTH directions:
   // it builds as the scroll accelerates and recovers as it settles
