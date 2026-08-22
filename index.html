@@ -155,9 +155,15 @@
   .proj{ --slotH: clamp(230px, 24vw, 330px); }
   .proj.open{ --slotH: clamp(460px, 52vw, 720px); }
 
-  .proj.open .proj-stage{ cursor:grab; touch-action:pan-y; }
-  .proj.open .proj-stage:active{ cursor:grabbing; }
-  .proj.open .gal-slide .plate{ user-select:none; -webkit-user-drag:none; }
+  /* the whole open project is one draggable block — image, metadata,
+     description and credits all swipe together */
+  .proj.open{ cursor:grab; touch-action:pan-y; }
+  .proj.open.dragging{ cursor:grabbing; user-select:none; }
+  .proj.open.dragging *{ cursor:grabbing; }
+  .proj.open .plate{ -webkit-user-drag:none; user-select:none; }
+  .proj.open a, .proj.open img{ -webkit-user-drag:none; }
+  /* buttons stay clickable and keep their own cursor */
+  .proj.open button{ cursor:pointer; }
   .proj-stage{
     cursor:pointer; position:relative;
     height:var(--slotH);
@@ -733,7 +739,6 @@ projects.forEach(proj=>{
     dragging = true; axis = null; proj._dragMoved = false;
     dragX = e.clientX; dragY = e.clientY;
     baseShift = -gi * pitch;
-    stageEl.style.cursor = 'grabbing';
   }
   function onMove(e){
     if(!dragging) return;
@@ -743,7 +748,8 @@ projects.forEach(proj=>{
       axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       // any real movement counts as a drag, so it never lands as a click
       proj._dragMoved = true;
-      if(axis === 'y'){ dragging = false; stageEl.style.cursor=''; return; }  // let the page scroll
+      if(axis === 'y'){ dragging = false; proj.classList.remove('dragging'); return; }  // let the page scroll
+      proj.classList.add('dragging');   // suppress text selection mid-swipe
     }
     proj._dragMoved = true;
     if(e.cancelable) e.preventDefault();
@@ -758,9 +764,9 @@ projects.forEach(proj=>{
     // always clear the drag flag, even for a vertical gesture that was
     // handed back to the page — otherwise the release lands as a click
     if(proj._dragMoved) setTimeout(()=>{ proj._dragMoved = false; }, 80);
-    if(!dragging){ axis = null; return; }
+    if(!dragging){ axis = null; proj.classList.remove('dragging'); return; }
     dragging = false;
-    stageEl.style.cursor = '';
+    proj.classList.remove('dragging');
     if(axis !== 'x'){ axis = null; return; }
     const dx = e.clientX - dragX;
     // a short flick is enough; otherwise settle to whichever is nearest
@@ -773,7 +779,7 @@ projects.forEach(proj=>{
   }
   function slidesCount(){ return slides.length; }
 
-  stageEl.addEventListener('pointerdown', onDown);
+  proj.addEventListener('pointerdown', onDown);
   addEventListener('pointermove', onMove, {passive:false});
   addEventListener('pointerup', onUp);
   addEventListener('pointercancel', onUp);
