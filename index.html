@@ -164,6 +164,7 @@
     position:relative; width:100%; height:100%;
     overflow:hidden; border-radius:2px;
   }
+  .proj.open .proj-crop{ overflow:visible; }
   .proj-crop .plate{ width:100%; height:100%; }
   .proj-stage::after{
     content:'View project';
@@ -197,46 +198,49 @@
   .proj.open .proj-expand{max-height:2200px;}
   .expand-inner{padding-top:64px;}
 
-  /* ---- LARGE CENTRED GALLERY ------------------------------------------
-     One big image at a time, with the neighbouring images peeking at the
-     edges. Left/right moves through the images of THIS project.          */
-  .gal{ position:relative; margin-bottom:8px; }
-  .gal-viewport{ overflow:hidden; width:100%; }
+  /* ---- SIDE-BY-SIDE IMAGE ROW ------------------------------------------
+     When a project is open its images sit in ONE horizontal row at full
+     size — the hero is simply the first image in that row, so nothing is
+     stacked underneath. Left/right slides the row.                        */
   .gal-track{
-    display:flex; align-items:stretch; gap:18px;
-    transition:transform .75s cubic-bezier(.22,.9,.24,1);
+    display:flex; align-items:stretch; gap:0;
+    height:100%;
+    transition:transform .8s cubic-bezier(.22,.9,.24,1), gap .8s cubic-bezier(.22,.9,.24,1);
     will-change:transform;
   }
   .gal-slide{
-    flex:0 0 74%;
-    height:clamp(320px, 46vh, 600px);
-    opacity:.42;
-    transition:opacity .6s ease;
+    flex:0 0 100%;
+    height:100%;
+    transition:flex-basis .8s cubic-bezier(.22,.9,.24,1);
   }
-  .gal-slide.active{ opacity:1; }
   .gal-slide .plate{ width:100%; height:100%; }
 
+  /* open: images become a side-by-side row that runs past the right edge */
+  .proj.open{ --slideW: 46vw; --galGap: 24vw; }
+  .proj.open .gal-track{ gap:var(--galGap); }
+  .proj.open .gal-slide{ flex:0 0 var(--slideW); }
+
   .gal-nav{
-    position:absolute; top:calc(50% - 14px); transform:translateY(-50%);
+    position:absolute; top:50%; transform:translateY(-50%);
     width:46px; height:46px; border-radius:50%;
     background:rgba(38,36,31,.80); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:17px; line-height:1; cursor:pointer; z-index:5;
-    border:none; opacity:0;
-    transition:opacity .3s ease, background .25s ease;
+    display:none; align-items:center; justify-content:center;
+    font-size:17px; line-height:1; cursor:pointer; z-index:6; border:none;
+    opacity:0; transition:opacity .3s ease, background .25s ease;
   }
-  .gal:hover .gal-nav{ opacity:1; }
+  .proj.open .gal-nav{ display:flex; }
+  .proj.open .proj-stage:hover .gal-nav{ opacity:1; }
   .gal-nav:hover{ background:var(--sage-deep); }
   .gal-nav:disabled{ opacity:0 !important; pointer-events:none; }
-  .gal-nav.prev{ left:calc(13% - 23px); }
-  .gal-nav.next{ right:calc(13% - 23px); }
-  @media (hover:none){ .gal-nav{ opacity:1; background:rgba(38,36,31,.6); } }
+  .gal-nav.prev{ left:14px; }
+  .gal-nav.next{ left:calc(var(--slideW, 100%) - 60px); }
+  @media (hover:none){ .proj.open .gal-nav{ opacity:1; background:rgba(38,36,31,.6); } }
 
   .gal-foot{
-    display:flex; justify-content:space-between; align-items:baseline; gap:20px;
-    width:74%; margin:14px auto 0;
-    padding-top:8px; border-top:1px solid var(--line);
+    display:none; justify-content:space-between; align-items:baseline; gap:20px;
+    margin-top:12px; padding-top:8px; border-top:1px solid var(--line);
   }
+  .proj.open .gal-foot{ display:flex; width:var(--slideW); }
   .gal-cap{ font-size:11.5px; line-height:1.5; color:var(--ink-soft); }
   .gal-count{
     font-size:10.5px; letter-spacing:.1em; color:var(--ink-faint);
@@ -244,16 +248,13 @@
   }
   .gal-count b{ color:var(--ink); font-weight:500; }
 
-  /* explicit project-to-project controls, kept visually separate from the
-     image arrows so the two navigations can never be confused */
   .proj-nav{
     display:flex; justify-content:space-between; gap:16px;
     margin-top:38px; padding-top:22px; border-top:1px solid var(--line);
   }
   .proj-nav button{
     font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:500;
-    color:var(--ink-soft); padding:8px 0; cursor:pointer;
-    transition:color .25s ease;
+    color:var(--ink-soft); padding:8px 0; cursor:pointer; transition:color .25s ease;
   }
   .proj-nav button:hover{ color:var(--sage-deep); }
 
@@ -315,9 +316,9 @@
     .proj-left{text-align:left;}
     .share-row{justify-content:flex-start;}
     .proj-stage .plate{height:44vh !important;}
-    .gal-slide{flex:0 0 84%;height:34vh;}
-    .gal-foot{width:84%;}
-    .gal-nav.prev{left:2px;} .gal-nav.next{right:2px;}
+    .proj.open{ --slideW:100%; --galGap:16px; }
+    .proj.open .gal-foot{width:100%;}
+    .gal-nav.prev{left:6px;} .gal-nav.next{left:auto;right:6px;}
     .process-grid{grid-template-columns:1fr;}
     .about-grid{grid-template-columns:1fr;}
     .about-portrait{aspect-ratio:16/10;}
@@ -434,7 +435,7 @@ const ICONS = {
 const TONES = ['tone-sage','tone-oak','tone-stone','tone-blush','tone-slate'];
 
 const PROJECTS = [
-  { id:'p1', icon:'bottle', tone:'tone-blush', title:'Perfume Store Interior', loc:'Istanbul, Türkiye',
+  { id:'p1', coverCap:'EXTERIOR — The storefront reads as a single warm aperture onto the street.', icon:'bottle', tone:'tone-blush', title:'Perfume Store Interior', loc:'Istanbul, Türkiye',
     program:'Retail — Store Design', studio:'2nd Year Studio', year:'2022', software:'AutoCAD, SketchUp, D5 Render', status:'Academic Studio Project',
     focus:'Visual merchandising, Lighting design',
     text:['A concept store built around scent as the organising idea rather than the shelf plan — display fixtures are arranged as a slow route through fragrance families, not a wall of stock facing the door.',
@@ -443,7 +444,7 @@ const PROJECTS = [
             {icon:'lamp',tone:'tone-oak',cap:'LIGHT — Fixtures pulled low and warm, closer to a dressing table than a shopfront.'},
             {icon:'frame',tone:'tone-blush',cap:'DISPLAY — Brass and plaster keep the bottles as the brightest surface in the room.'} ] },
 
-  { id:'p2', icon:'house', tone:'tone-sage', title:'Private Residence', loc:'Istanbul, Türkiye',
+  { id:'p2', coverCap:'EXTERIOR — The house seen from the approach, before any interior move.', icon:'house', tone:'tone-sage', title:'Private Residence', loc:'Istanbul, Türkiye',
     program:'Residential — Private Residence', studio:'2nd Year Studio', year:'2022', software:'AutoCAD, SketchUp, 3ds Max', status:'Academic Studio Project',
     focus:'Space organization, Ergonomic design',
     text:['A custom residential brief for a single family, worked from room organisation up rather than finish down — every plan option was tested first against how the household actually moves through a day before any material was chosen.',
@@ -452,7 +453,7 @@ const PROJECTS = [
             {icon:'table',tone:'tone-stone',cap:'FURNITURE — Built-in pieces sized directly to the family\'s ergonomic brief.'},
             {icon:'lamp',tone:'tone-sage',cap:'LIGHT — Daylight access held as a fixed requirement through every plan revision.'} ] },
 
-  { id:'p3', icon:'blocks', tone:'tone-oak', title:'Kindergarten', loc:'Istanbul, Türkiye',
+  { id:'p3', coverCap:'EXTERIOR — The entrance courtyard, sized to a child rather than an adult.', icon:'blocks', tone:'tone-oak', title:'Kindergarten', loc:'Istanbul, Türkiye',
     program:'Education — Kindergarten', studio:'3rd Year Studio', year:'2023', software:'AutoCAD, SketchUp, D5 Render', status:'Academic Studio Project',
     focus:'Universal design, Ergonomic design',
     text:['A kindergarten designed at a child\'s scale first — sightlines, door handles, and seating heights were all set against a five-year-old\'s reach before an adult\'s, then checked back against supervision and safety.',
@@ -461,7 +462,7 @@ const PROJECTS = [
             {icon:'arch',tone:'tone-blush',cap:'SAFETY — Soft, washable materials held to contact height throughout.'},
             {icon:'win',tone:'tone-stone',cap:'COLOUR — Playful at low level, calmer above it, to avoid overstimulation.'} ] },
 
-  { id:'p4', icon:'leaf', tone:'tone-stone', title:'Nature Hotel', loc:'Türkiye',
+  { id:'p4', coverCap:'EXTERIOR — The hotel set into the slope, landscape kept as the main material.', icon:'leaf', tone:'tone-stone', title:'Nature Hotel', loc:'Türkiye',
     program:'Hospitality — Boutique Hotel', studio:'3rd Year Studio', year:'2024', software:'Rhino, SketchUp, D5 Render', status:'Academic Studio Project',
     focus:'Sustainable design, Material knowledge',
     text:['A small boutique hotel sited to keep the surrounding landscape as the main material of the project — rooms are oriented outward before they\'re detailed inward, and public spaces are sequenced as a slow release from arrival toward the view.',
@@ -470,7 +471,7 @@ const PROJECTS = [
             {icon:'gable',tone:'tone-sage',cap:'MATERIAL — Timber and stone selected for weathering, not just first appearance.'},
             {icon:'win',tone:'tone-blush',cap:'SEQUENCE — Arrival to view staged as a slow release through the public rooms.'} ] },
 
-  { id:'p5', icon:'sect', tone:'tone-slate', title:'Coworking Complex', loc:'Istanbul, Türkiye',
+  { id:'p5', coverCap:'EXTERIOR — The industrial shell retained and left legible from the street.', icon:'sect', tone:'tone-slate', title:'Coworking Complex', loc:'Istanbul, Türkiye',
     program:'Commercial & Mixed-Use — Coworking', studio:'4th Year Studio', year:'2025', software:'AutoCAD, Rhino, D5 Render', status:'Academic Studio Project',
     focus:'Adaptive reuse, Acoustics',
     text:['A coworking complex proposed inside a disused industrial shell, developed alongside coursework on reusing abandoned industrial heritage rather than as a purely new-build exercise — the existing structure set most of the early planning decisions.',
@@ -479,7 +480,7 @@ const PROJECTS = [
             {icon:'grid',tone:'tone-slate',cap:'PLAN — Open-plan zones tuned by acoustic treatment rather than partition walls.'},
             {icon:'slats',tone:'tone-sage',cap:'REUSE — Existing shell driven early planning decisions ahead of any new material.'} ] },
 
-  { id:'p6', icon:'book', tone:'tone-sage', title:'Art History Library', loc:'Istanbul, Türkiye',
+  { id:'p6', coverCap:'EXTERIOR — The host building, whose heritage fabric set the brief.', icon:'book', tone:'tone-sage', title:'Art History Library', loc:'Istanbul, Türkiye',
     program:'Cultural — Art History Library', studio:'Thesis Project', year:'2026', software:'Rhino, D5 Render, AutoCAD', status:'Thesis Project',
     focus:'Museum interior design, Conservation & restoration',
     text:['Graduation thesis project: a library dedicated to art history housed within a building carrying its own heritage value — the brief sat directly at the intersection of two coursework threads, contemporary museum interior approaches and conservation and restoration practice.',
@@ -520,26 +521,23 @@ list.innerHTML = PROJECTS.map(p=>`
     </div>
 
     <div class="proj-stage" data-stage role="button" tabindex="0" aria-expanded="false" aria-controls="${p.id}-x">
-      <div class="proj-crop" data-crop>${plate(p.icon,p.tone)}</div>
+      <div class="proj-crop" data-crop>
+        <div class="gal-track" data-gal-track>
+          ${[{icon:p.icon,tone:p.tone,cap:p.coverCap}].concat(p.strip).map(sl=>`<div class="gal-slide">${plate(sl.icon,sl.tone)}</div>`).join('')}
+        </div>
+      </div>
+      <button type="button" class="gal-nav prev" data-gal-prev aria-label="Previous image">‹</button>
+      <button type="button" class="gal-nav next" data-gal-next aria-label="Next image">›</button>
+      <div class="gal-foot">
+        <span class="gal-cap" data-cap>${p.coverCap}</span>
+        <span class="gal-count" data-count><b>01</b> / ${String(p.strip.length+1).padStart(2,'0')}</span>
+      </div>
     </div>
 
     <div class="proj-right">${p.text.map(t=>`<p>${t}</p>`).join('')}</div>
 
     <div class="proj-expand" id="${p.id}-x">
       <div class="expand-inner">
-        <div class="gal" data-gal>
-          <button type="button" class="gal-nav prev" data-gal-prev aria-label="Previous image">‹</button>
-          <div class="gal-viewport">
-            <div class="gal-track" data-gal-track>
-              ${p.strip.map((sl,n)=>`<div class="gal-slide${n===0?' active':''}">${plate(sl.icon,sl.tone)}</div>`).join('')}
-            </div>
-          </div>
-          <button type="button" class="gal-nav next" data-gal-next aria-label="Next image">›</button>
-          <div class="gal-foot">
-            <span class="gal-cap" data-cap>${p.strip[0].cap}</span>
-            <span class="gal-count" data-count><b>01</b> / ${String(p.strip.length).padStart(2,'0')}</span>
-          </div>
-        </div>
         <div class="credits">
           <div><div class="cred-l">University</div><div class="cred-v"><span>Mimar Sinan Fine Arts University</span><span>Faculty of Architecture, Istanbul</span></div></div>
           <div><div class="cred-l">Coursework Focus</div><div class="cred-v"><span>${p.focus}</span></div></div>
@@ -579,12 +577,32 @@ function toggle(proj){
   proj.querySelector('[data-stage]').setAttribute('aria-expanded', String(open));
   if(typeof applyColumns === 'function') applyColumns();
 
-  // the opened project starts dominant; its contraction is measured from
-  // the scroll position at the moment it opened
   if(typeof openedAt !== 'undefined') openedAt = open ? scrollPos : null;
 
-  // keep this row pinned in the viewport while it grows or shrinks
-  if(typeof startAnchor === 'function') startAnchor(proj);
+  // reset the image row whenever the open state changes
+  if(proj._gallery) requestAnimationFrame(()=>proj._gallery.render());
+
+  if(open){
+    // bring the opened project's image to the centre of the screen, tracking
+    // it continuously while the row grows so it lands accurately
+    const stage = proj.querySelector('[data-stage]');
+    const t0 = performance.now();
+    const centre = ()=>{
+      const h = stage.offsetHeight;
+      const docTop = proj.offsetTop + stage.offsetTop;
+      const want = Math.max(docTop - Math.max((innerHeight - h)/2, 80), 0);
+      scrollTo({ top: want, behavior: performance.now()-t0 < 60 ? 'smooth' : 'auto' });
+      // contraction should measure from where the project SETTLES, not from
+      // where it was clicked, so the centring scroll doesn't shrink it
+      if(typeof openedAt !== 'undefined') openedAt = scrollPos;
+      if(performance.now() - t0 < 900) requestAnimationFrame(centre);
+      else if(proj._gallery) proj._gallery.render();
+    };
+    requestAnimationFrame(centre);
+  } else if(typeof startAnchor === 'function'){
+    // closing keeps your place in the list
+    startAnchor(proj);
+  }
 
   if(typeof measure === 'function'){
     const t0 = performance.now();
@@ -608,8 +626,9 @@ projects.forEach(proj=>{
   });
   proj.querySelector('.proj-left').style.cursor='pointer';
 
-  // ---- large centred gallery: left/right moves through THIS project's images
-  const gal      = proj.querySelector('[data-gal]');
+  // ---- side-by-side image row: left/right slides through THIS project
+  const stageEl  = proj.querySelector('[data-stage]');
+  const crop     = proj.querySelector('[data-crop]');
   const track    = proj.querySelector('[data-gal-track]');
   const slides   = Array.from(track.children);
   const cap      = proj.querySelector('[data-cap]');
@@ -617,38 +636,48 @@ projects.forEach(proj=>{
   const gPrev    = proj.querySelector('[data-gal-prev]');
   const gNext    = proj.querySelector('[data-gal-next]');
   const data     = PROJECTS.find(x=>x.id===proj.id);
+  const caps     = [data.coverCap].concat(data.strip.map(x=>x.cap));
   let   gi       = 0;
 
   function renderGallery(){
-    const vw = gal.querySelector('.gal-viewport').clientWidth;
-    const sw = slides[0] ? slides[0].offsetWidth : 0;
-    const gap = 18;
-    // centre the active slide, letting its neighbours peek at the edges
-    const offset = (vw - sw)/2 - gi*(sw + gap);
-    track.style.transform = `translate3d(${offset.toFixed(1)}px,0,0)`;
-    slides.forEach((el,n)=>el.classList.toggle('active', n===gi));
-    cap.textContent = data.strip[gi].cap;
-    count.innerHTML = `<b>${String(gi+1).padStart(2,'0')}</b> / ${String(data.strip.length).padStart(2,'0')}`;
+    const open = proj.classList.contains('open');
+    if(!open) gi = 0;
+    let slideW = crop.clientWidth, gap = 0;
+    if(open){
+      // measured once per open/resize/step — never inside the scroll loop
+      const cropX = crop.getBoundingClientRect().left;
+      const right = proj.querySelector('.proj-right').getBoundingClientRect();
+      slideW = Math.max(right.left - cropX - 34, 280);
+      gap    = right.width + 68;          // the description lives in this gap
+      proj.style.setProperty('--slideW', slideW + 'px');
+      proj.style.setProperty('--galGap', gap + 'px');
+    }
+    track.style.transform = `translate3d(${(-gi*(slideW+gap)).toFixed(1)}px,0,0)`;
+    cap.textContent = caps[gi];
+    count.innerHTML = `<b>${String(gi+1).padStart(2,'0')}</b> / ${String(slides.length).padStart(2,'0')}`;
     gPrev.disabled = gi<=0;
     gNext.disabled = gi>=slides.length-1;
   }
   proj._gallery = {
     step(d){
+      if(!proj.classList.contains('open')) return false;
       const n = gi + d;
       if(n<0 || n>=slides.length) return false;
       gi = n; renderGallery(); return true;
     },
-    render:renderGallery
+    reset(){ gi = 0; renderGallery(); },
+    render: renderGallery
   };
   gPrev.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(-1); });
   gNext.addEventListener('click', e=>{ e.stopPropagation(); proj._gallery.step(1); });
 
-  // swipe across the gallery moves between images
+  // swipe across the image row
   let gx=0, gy=0;
-  gal.addEventListener('touchstart', e=>{
+  stageEl.addEventListener('touchstart', e=>{
     gx=e.changedTouches[0].clientX; gy=e.changedTouches[0].clientY;
   }, {passive:true});
-  gal.addEventListener('touchend', e=>{
+  stageEl.addEventListener('touchend', e=>{
+    if(!proj.classList.contains('open')) return;
     const dx=e.changedTouches[0].clientX-gx, dy=e.changedTouches[0].clientY-gy;
     if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.4){
       proj._gallery.step(dx<0?1:-1);
