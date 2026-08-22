@@ -10,8 +10,8 @@
   svg{position:fixed;inset:0;width:100%;height:100%;display:block;}
   /* pieces are stroked in their own fill colour so no hairline seams
      show where neighbouring parts of the logo meet mid-animation */
-  path{fill:#000;stroke:#000;stroke-width:1.1;stroke-linejoin:round;}
-  #exact{stroke:none;}
+  path{fill:#000;stroke:#000;stroke-width:1.1;stroke-linejoin:round; transition: opacity 0.45s ease-out;}
+  #exact{stroke:none; opacity:0; transition: opacity 0.45s ease-out;}
 </style>
 </head>
 <body>
@@ -51,52 +51,86 @@ function d_of(pts){
   for(let i=1;i<pts.length;i++) s+='L'+pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1);
   return s+'Z';
 }
-// For reduced-motion we still show the perfect single path immediately.
-// For the animated version we intentionally keep the settled polylines
-// (stroke fully removed). They are dense enough that the visual difference
-// is negligible, and there is never a sudden sharpening discontinuity.
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){
-  const g=document.createElementNS(NS,'path');
-  g.setAttribute('id','exact'); g.setAttribute('d',EXACT);
-  g.setAttribute('fill-rule','evenodd');
+function finish(){
+  // Soft cross-fade from the settled polylines into the original
+  // single Bezier path so the logo ends perfectly crisp with no pop.
+  const g = document.createElementNS(NS, 'path');
+  g.setAttribute('id', 'exact');
+  g.setAttribute('d', EXACT);
+  g.setAttribute('fill-rule', 'evenodd');
+  g.style.opacity = '0';
   svg.appendChild(g);
-  parts.forEach(p=>p.el.remove());
+
+  // force style application then fade the exact path in
+  g.getBoundingClientRect();
+  requestAnimationFrame(() => {
+    g.style.opacity = '1';
+    parts.forEach(p => {
+      p.el.style.opacity = '0';
+    });
+  });
+
+  // clean up the temporary pieces after the transition
+  setTimeout(() => {
+    parts.forEach(p => p.el.remove());
+  }, 500);
 }
-else{
-  const t0=performance.now();
-  const buf=parts.map(p=>p.final.map(function(){return [0,0];}));
+
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const g = document.createElementNS(NS, 'path');
+  g.setAttribute('id', 'exact');
+  g.setAttribute('d', EXACT);
+  g.setAttribute('fill-rule', 'evenodd');
+  g.style.opacity = '1';
+  svg.appendChild(g);
+  parts.forEach(p => p.el.remove());
+} else {
+  const t0 = performance.now();
+  const buf = parts.map(p => p.final.map(() => [0, 0]));
   const LAST_FORM_END = 3.17 + GROW + FORM;
-  const STROKE_FADE = 0.4; // longer, softer taper of the seam-hiding stroke
-  function frame(now){
-    const t=(now-t0)/1000; let done=true;
-    // stroke starts thinning only after geometry has fully settled
-    const strokeT = c01((t - LAST_FORM_END) / STROKE_FADE);
+  const STROKE_FADE = 0.35;
+  let finished = false;
+
+  function frame(now) {
+    if (finished) return;
+    const t = (now - t0) / 1000;
+    let done = true;
+
+    // gently remove the seam-hiding stroke after geometry has settled
+    const strokeT = c01((t - (LAST_FORM_END - STROKE_FADE)) / STROKE_FADE);
     const sw = 1.1 * (1 - ease(strokeT));
-    for(let pi=0;pi<parts.length;pi++){
-      const p=parts[pi], local=t-p.delay;
-      if(local<0){ p.el.setAttribute('d',''); done=false; continue; }
-      const g=c01(local/GROW), f=c01((local-GROW)/FORM);
-      if(f<1) done=false;
-      const eg=ease(g), ef=ease(f), out=buf[pi];
-      for(let i=0;i<p.n;i++){
+
+    for (let pi = 0; pi < parts.length; pi++) {
+      const p = parts[pi], local = t - p.delay;
+      if (local < 0) {
+        p.el.setAttribute('d', '');
+        done = false;
+        continue;
+      }
+      const g = c01(local / GROW), f = c01((local - GROW) / FORM);
+      if (f < 1) done = false;
+      const eg = ease(g), ef = ease(f), out = buf[pi];
+      for (let i = 0; i < p.n; i++) {
         // tip-first growth along the vine
-        const gp=ease(c01((eg-p.u[i]*0.82)/0.18));
-        const sx=p.seed[0]+(p.flat[i][0]-p.seed[0])*gp;
-        const sy=p.seed[1]+(p.flat[i][1]-p.seed[1])*gp;
+        const gp = ease(c01((eg - p.u[i] * 0.82) / 0.18));
+        const sx = p.seed[0] + (p.flat[i][0] - p.seed[0]) * gp;
+        const sy = p.seed[1] + (p.flat[i][1] - p.seed[1]) * gp;
         // the organic line then resolves into exact logo geometry
-        out[i][0]=sx+(p.final[i][0]-sx)*ef;
-        out[i][1]=sy+(p.final[i][1]-sy)*ef;
+        out[i][0] = sx + (p.final[i][0] - sx) * ef;
+        out[i][1] = sy + (p.final[i][1] - sy) * ef;
       }
-      p.el.setAttribute('d',d_of(out));
+      p.el.setAttribute('d', d_of(out));
       p.el.setAttribute('stroke-width', Math.max(0, sw).toFixed(3));
-      if(sw < 0.03){
-        p.el.setAttribute('stroke', 'none');
-      } else {
-        p.el.setAttribute('stroke', '#000');
-      }
+      if (sw < 0.04) p.el.setAttribute('stroke', 'none');
+      else p.el.setAttribute('stroke', '#000');
     }
-    // keep animating a little past the form phase so the stroke can finish fading
-    if(done && strokeT >= 1) return;
+
+    // once geometry is final and stroke has thinned, cross-fade to the crisp path
+    if (done && strokeT >= 1) {
+      finished = true;
+      finish();
+      return;
+    }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
