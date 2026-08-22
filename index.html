@@ -220,33 +220,29 @@
   .proj.open .gal-track{ gap:var(--galGap); }
   .proj.open .gal-slide{ flex:0 0 var(--slideW); }
 
-  .gal-nav{
-    position:absolute; top:50%; transform:translateY(-50%);
-    width:46px; height:46px; border-radius:50%;
-    background:rgba(38,36,31,.80); color:#fff;
-    display:none; align-items:center; justify-content:center;
-    font-size:17px; line-height:1; cursor:pointer; z-index:6; border:none;
-    opacity:0; transition:opacity .3s ease, background .25s ease;
-  }
-  .proj.open .gal-nav{ display:flex; }
-  .proj.open .proj-stage:hover .gal-nav{ opacity:1; }
-  .gal-nav:hover{ background:var(--sage-deep); }
-  .gal-nav:disabled{ opacity:0 !important; pointer-events:none; }
-  .gal-nav.prev{ left:14px; }
-  .gal-nav.next{ left:calc(var(--slideW, 100%) - 60px); }
-  @media (hover:none){ .proj.open .gal-nav{ opacity:1; background:rgba(38,36,31,.6); } }
-
   .gal-foot{
-    display:none; justify-content:space-between; align-items:baseline; gap:20px;
-    margin-top:12px; padding-top:8px; border-top:1px solid var(--line);
+    display:none; align-items:center; gap:20px;
+    margin-top:14px; padding-top:10px; border-top:1px solid var(--line);
   }
   .proj.open .gal-foot{ display:flex; width:var(--slideW); }
-  .gal-cap{ font-size:11.5px; line-height:1.5; color:var(--ink-soft); }
+  .gal-cap{ font-size:11.5px; line-height:1.5; color:var(--ink-soft); flex:1 1 auto; }
+  .gal-tools{ display:flex; align-items:center; gap:14px; flex:0 0 auto; }
   .gal-count{
     font-size:10.5px; letter-spacing:.1em; color:var(--ink-faint);
     font-variant-numeric:tabular-nums; white-space:nowrap;
   }
   .gal-count b{ color:var(--ink); font-weight:500; }
+
+  /* prev/next sit at the end of the caption strip, never over the image */
+  .gal-nav{
+    width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--line); background:transparent; color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; line-height:1; cursor:pointer;
+    transition:background .25s ease, color .25s ease, border-color .25s ease, opacity .25s ease;
+  }
+  .gal-nav:hover:not(:disabled){ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .gal-nav:disabled{ opacity:.28; cursor:default; }
 
   .proj-nav{
     display:flex; justify-content:space-between; gap:16px;
@@ -318,7 +314,6 @@
     .proj-stage .plate{height:44vh !important;}
     .proj.open{ --slideW:100%; --galGap:16px; }
     .proj.open .gal-foot{width:100%;}
-    .gal-nav.prev{left:6px;} .gal-nav.next{left:auto;right:6px;}
     .process-grid{grid-template-columns:1fr;}
     .about-grid{grid-template-columns:1fr;}
     .about-portrait{aspect-ratio:16/10;}
@@ -526,11 +521,13 @@ list.innerHTML = PROJECTS.map(p=>`
           ${[{icon:p.icon,tone:p.tone,cap:p.coverCap}].concat(p.strip).map(sl=>`<div class="gal-slide">${plate(sl.icon,sl.tone)}</div>`).join('')}
         </div>
       </div>
-      <button type="button" class="gal-nav prev" data-gal-prev aria-label="Previous image">‹</button>
-      <button type="button" class="gal-nav next" data-gal-next aria-label="Next image">›</button>
       <div class="gal-foot">
         <span class="gal-cap" data-cap>${p.coverCap}</span>
-        <span class="gal-count" data-count><b>01</b> / ${String(p.strip.length+1).padStart(2,'0')}</span>
+        <div class="gal-tools">
+          <span class="gal-count" data-count><b>01</b> / ${String(p.strip.length+1).padStart(2,'0')}</span>
+          <button type="button" class="gal-nav" data-gal-prev aria-label="Previous image">‹</button>
+          <button type="button" class="gal-nav" data-gal-next aria-label="Next image">›</button>
+        </div>
       </div>
     </div>
 
@@ -583,22 +580,29 @@ function toggle(proj){
   if(proj._gallery) requestAnimationFrame(()=>proj._gallery.render(true));
 
   if(open){
-    // bring the opened project's image to the centre of the screen, tracking
-    // it continuously while the row grows so it lands accurately
+    // Hold the row exactly where it is while it grows — no jump — then make
+    // ONE smooth move to centre once the layout has settled. Scrolling every
+    // frame during the transition is what made this feel like it snapped.
+    if(typeof startAnchor === 'function') startAnchor(proj, 780);
     const stage = proj.querySelector('[data-stage]');
-    const t0 = performance.now();
-    const centre = ()=>{
-      const h = stage.offsetHeight;
-      const docTop = proj.offsetTop + stage.offsetTop;
-      const want = Math.max(docTop - Math.max((innerHeight - h)/2, 80), 0);
-      scrollTo({ top: want, behavior: performance.now()-t0 < 60 ? 'smooth' : 'auto' });
-      // contraction should measure from where the project SETTLES, not from
-      // where it was clicked, so the centring scroll doesn't shrink it
-      if(typeof openedAt !== 'undefined') openedAt = scrollPos;
-      if(performance.now() - t0 < 900) requestAnimationFrame(centre);
-      else if(proj._gallery) proj._gallery.render(true);
-    };
-    requestAnimationFrame(centre);
+    if(typeof openedAt !== 'undefined') openedAt = null;   // no contraction yet
+    setTimeout(()=>{
+      if(!proj.classList.contains('open')) return;
+      if(proj._gallery) proj._gallery.refine();   // true geometry, now static
+      // measure against the viewport: unambiguous, and the layout is static
+      const r = stage.getBoundingClientRect();
+      const targetTop = Math.max((innerHeight - r.height)/2, 80);
+      const want = Math.max(scrollPos + r.top - targetTop, 0);
+      quiet(1100);                       // our own scroll must not squeeze it
+      scrollTo({ top: want, behavior:'smooth' });
+      // only once the page has actually settled does scrolling start to
+      // contract the project — otherwise our own centring shrinks it
+      setTimeout(()=>{
+        if(proj.classList.contains('open') && typeof openedAt !== 'undefined'){
+          openedAt = scrollPos;
+        }
+      }, 700);
+    }, 820);
   } else if(typeof startAnchor === 'function'){
     // closing keeps your place in the list
     startAnchor(proj);
@@ -640,6 +644,26 @@ projects.forEach(proj=>{
   let   gi       = 0;
   let   metrics  = null;      // {slideW, gap} — cached, never read mid-animation
 
+  // the open layout is fully determined by the CSS clamps, so it can be
+  // derived without reading a half-finished transition
+  function predictMetrics(){
+    const vw = innerWidth;
+    const cl = (min,pref,max)=>Math.min(Math.max(pref,min),max);
+    const edge = cl(20, vw*0.04, 56);
+    const contentW = Math.min(1320, vw) - edge*2;
+    const colL = cl(190, vw*0.17, 250);
+    const colR = cl(200, vw*0.20, 300);
+    const gap  = cl(26,  vw*0.03, 48);
+    const centreW = contentW - colL - colR - gap*2;
+    return { slideW: Math.max(centreW, 280), gap: colR + gap*2 + 34 };
+  }
+
+  function applyMetrics(m){
+    metrics = m;
+    proj.style.setProperty('--slideW', m.slideW + 'px');
+    proj.style.setProperty('--galGap', m.gap + 'px');
+  }
+
   function measureMetrics(){
     const desc = proj.querySelector('.proj-right');
     if(!proj.classList.contains('open') || !desc){ metrics = null; return; }
@@ -651,20 +675,21 @@ projects.forEach(proj=>{
     void desc.offsetWidth;                       // force the reset to apply
     const cropX = crop.getBoundingClientRect().left;
     const r     = desc.getBoundingClientRect();
-    metrics = {
+    const m = {
       slideW: Math.max(r.left - cropX - 34, 280),
       gap:    r.width + 68                       // the description lives here
     };
     desc.style.transform  = prevX;
     desc.style.transition = prevT;
-    proj.style.setProperty('--slideW', metrics.slideW + 'px');
-    proj.style.setProperty('--galGap', metrics.gap + 'px');
+    applyMetrics(m);
   }
 
   function renderGallery(remeasure){
     const open = proj.classList.contains('open');
     if(!open){ gi = 0; metrics = null; }
-    if(open && (remeasure || !metrics)) measureMetrics();
+    // on open use the predicted layout immediately, so the row animates
+    // straight to its final proportions instead of settling into them
+    if(open && (remeasure || !metrics)) applyMetrics(predictMetrics());
 
     const desc   = proj.querySelector('.proj-right');
     const slideW = open && metrics ? metrics.slideW : crop.clientWidth;
@@ -691,6 +716,7 @@ projects.forEach(proj=>{
     gNext.disabled = gi>=slides.length-1;
   }
   proj._gallery = {
+    refine(){ if(proj.classList.contains('open')) measureMetrics(); },
     step(d){
       if(!proj.classList.contains('open')) return false;
       const n = gi + d;
@@ -872,6 +898,12 @@ let comp      = 0;      // eased compression, 0 at rest → 1 at full speed
 let dirSmooth = 0;      // smoothed scroll direction, -1 … 1
 
 let openedAt  = null;   // scroll position when the current project opened
+let quietUntil = 0;     // suppress the squeeze during our OWN scrolling
+
+/* Programmatic scrolls (opening a project, jumping between projects) should
+   not trigger the velocity squeeze — otherwise the project visibly compresses
+   during its own opening, which reads as a stutter. */
+function quiet(ms){ quietUntil = performance.now() + ms; }
 
 function frame(){
   const target = scrollY;             // the only read; never forces layout
@@ -890,6 +922,7 @@ function frame(){
   // normalised speed, then eased so the onset is never abrupt
   let sp = Math.min(Math.abs(vel) * 60 / VEL_REF, 1);
   sp = sp * sp * (3 - 2 * sp);
+  if(performance.now() < quietUntil) sp = 0;
 
   // the effect is gated: nothing compresses until the Studio Projects
   // heading has reached the top of the screen. A short ramp avoids the
@@ -923,7 +956,7 @@ function frame(){
 
       // an opened project starts dominant and contracts back toward the
       // others as the page scrolls on past it
-      if(openedAt !== null && projects[i].classList.contains('open')){
+      if(openedAt !== null && openedAt !== undefined && projects[i].classList.contains('open')){
         let t = (scrollPos - openedAt) / OPEN_TRAVEL;
         t = t < 0 ? 0 : (t > 1 ? 1 : t);
         t = t * t * (3 - 2 * t);
@@ -945,14 +978,15 @@ requestAnimationFrame(frame);
    shrinks, so opening and closing never throws the reader's position. */
 let anchorEl = null, anchorOffset = 0, anchorUntil = 0, anchorPending = false;
 
-function startAnchor(el){
+function startAnchor(el, ms){
   anchorEl = el;
   anchorOffset = el.offsetTop - scrollPos;
-  anchorUntil = performance.now() + 950;
+  anchorUntil = performance.now() + (ms || 950);
   anchorPending = true;
 }
 function holdAnchor(){
   if(!anchorEl){ anchorPending = false; return; }
+  if(performance.now() > anchorUntil){ anchorPending = false; anchorEl = null; return; }
   const desired = anchorEl.offsetTop - anchorOffset;
   if(Math.abs(desired - scrollPos) > 0.5){
     scrollPos = lastPos = Math.max(desired, 0);
@@ -972,7 +1006,7 @@ function goToProject(dir){
   if(next === cur) return false;
   toggle(projects[cur]);
   toggle(projects[next]);
-  scrollTo({ top: Math.max(projects[next].offsetTop - 140, 0), behavior:'smooth' });
+  quiet(1200);
   return true;
 }
 
