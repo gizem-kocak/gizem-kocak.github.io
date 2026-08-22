@@ -51,21 +51,27 @@ function d_of(pts){
   for(let i=1;i<pts.length;i++) s+='L'+pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1);
   return s+'Z';
 }
-function finish(){
-  // land on the original single path: one shape, no seams, identical to source
+// For reduced-motion we still show the perfect single path immediately.
+// For the animated version we intentionally keep the settled polylines
+// (stroke fully removed). They are dense enough that the visual difference
+// is negligible, and there is never a sudden sharpening discontinuity.
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){
   const g=document.createElementNS(NS,'path');
   g.setAttribute('id','exact'); g.setAttribute('d',EXACT);
   g.setAttribute('fill-rule','evenodd');
   svg.appendChild(g);
   parts.forEach(p=>p.el.remove());
 }
-
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){ finish(); }
 else{
   const t0=performance.now();
   const buf=parts.map(p=>p.final.map(function(){return [0,0];}));
+  const LAST_FORM_END = 3.17 + GROW + FORM;
+  const STROKE_FADE = 0.4; // longer, softer taper of the seam-hiding stroke
   function frame(now){
     const t=(now-t0)/1000; let done=true;
+    // stroke starts thinning only after geometry has fully settled
+    const strokeT = c01((t - LAST_FORM_END) / STROKE_FADE);
+    const sw = 1.1 * (1 - ease(strokeT));
     for(let pi=0;pi<parts.length;pi++){
       const p=parts[pi], local=t-p.delay;
       if(local<0){ p.el.setAttribute('d',''); done=false; continue; }
@@ -82,8 +88,15 @@ else{
         out[i][1]=sy+(p.final[i][1]-sy)*ef;
       }
       p.el.setAttribute('d',d_of(out));
+      p.el.setAttribute('stroke-width', Math.max(0, sw).toFixed(3));
+      if(sw < 0.03){
+        p.el.setAttribute('stroke', 'none');
+      } else {
+        p.el.setAttribute('stroke', '#000');
+      }
     }
-    if(done){ finish(); return; }
+    // keep animating a little past the form phase so the stroke can finish fading
+    if(done && strokeT >= 1) return;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
