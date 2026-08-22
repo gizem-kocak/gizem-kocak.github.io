@@ -6,17 +6,119 @@
 <title>Gizem Koçak</title>
 <style>
   *{box-sizing:border-box;}
-  html,body{margin:0;height:100%;background:#fff;overflow:hidden;}
-  svg{position:fixed;inset:0;width:100%;height:100%;display:block;}
-  /* pieces are stroked in their own fill colour so no hairline seams
-     show where neighbouring parts of the logo meet mid-animation */
-  path{fill:#000;stroke:#000;stroke-width:1.1;stroke-linejoin:round; transition: opacity 0.45s ease-out;}
-  #exact{stroke:none; opacity:0; transition: opacity 0.45s ease-out;}
+  html,body{margin:0;height:100%;background:#fff;overflow:hidden;font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;}
+  svg#stage{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:10;pointer-events:none;}
+  path{fill:#000;stroke:#000;stroke-width:1.1;stroke-linejoin:round;transition:opacity 0.45s ease-out;}
+  #exact{stroke:none;opacity:0;transition:opacity 0.45s ease-out;}
+  .particle{fill:none;stroke:#000;stroke-linecap:round;pointer-events:none;}
+
+  /* Homepage layer – starts hidden */
+  #site{
+    position:fixed;inset:0;z-index:5;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:8vh 6vw;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.8s ease;
+  }
+  #site.visible{opacity:1;pointer-events:auto;}
+
+  .name{
+    font-size:clamp(2.4rem, 6vw, 4.2rem);
+    font-weight:400;
+    letter-spacing:0.04em;
+    color:#111;
+    margin:0 0 0.35em;
+    opacity:0;
+    transform:translateY(12px);
+    transition:opacity 0.9s cubic-bezier(0.22,1,0.36,1), transform 0.9s cubic-bezier(0.22,1,0.36,1);
+  }
+  .name.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .role{
+    font-size:clamp(0.85rem, 1.6vw, 1rem);
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:#666;
+    margin:0 0 3.5rem;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity 0.8s 0.15s cubic-bezier(0.22,1,0.36,1), transform 0.8s 0.15s cubic-bezier(0.22,1,0.36,1);
+  }
+  .role.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .projects{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:2.5rem 3rem;
+    width:min(920px, 100%);
+    opacity:0;
+    transform:translateY(16px);
+    transition:opacity 0.9s 0.3s cubic-bezier(0.22,1,0.36,1), transform 0.9s 0.3s cubic-bezier(0.22,1,0.36,1);
+  }
+  .projects.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .project{
+    border-top:1px solid #ddd;
+    padding-top:1.1rem;
+  }
+  .project h3{
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.03em;
+    margin:0 0 0.4rem;
+    color:#111;
+  }
+  .project p{
+    font-size:0.8rem;
+    line-height:1.5;
+    color:#777;
+    margin:0;
+  }
+
+  .click-hint{
+    position:fixed;bottom:2.2rem;left:50%;transform:translateX(-50%);
+    font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:#bbb;
+    opacity:0;transition:opacity 0.6s;
+    pointer-events:none;z-index:20;
+  }
+  .click-hint.show{opacity:1;}
 </style>
 </head>
 <body>
 <svg id="stage" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"
      role="img" aria-label="GK — Gizem Koçak"></svg>
+
+<div id="site">
+  <h1 class="name">Gizem Koçak</h1>
+  <p class="role">Architecture · Design · Research</p>
+  <div class="projects">
+    <div class="project">
+      <h3>Selected Work</h3>
+      <p>Portfolio projects will appear here. Clean, editorial layout with generous space.</p>
+    </div>
+    <div class="project">
+      <h3>Approach</h3>
+      <p>Precise, material-driven design with attention to light, proportion and context.</p>
+    </div>
+    <div class="project">
+      <h3>Contact</h3>
+      <p>Available for collaborations and commissions worldwide.</p>
+    </div>
+  </div>
+</div>
+
+<div class="click-hint" id="hint">Click anywhere to enter</div>
+
 <script>
 const LOGO_W=522, LCX=261, LCY=204;
 
@@ -39,6 +141,7 @@ fitStage();
 const NS='http://www.w3.org/2000/svg';
 const EXACT="M228.50,382.42 C226.44,382.19 222.39,381.75 219.50,381.46 C216.61,381.16 213.46,380.72 212.50,380.49 C210.78,380.07 207.93,379.41 203.50,378.43 C198.29,377.27 196.61,376.84 194.00,375.99 C192.49,375.49 189.45,374.53 187.25,373.84 C181.94,372.19 176.38,369.67 167.64,364.97 C163.31,362.64 152.03,353.63 145.83,347.55 C140.22,342.05 132.40,332.52 128.77,326.77 C125.07,320.90 120.71,310.86 118.58,303.25 C118.08,301.50 117.41,299.17 116.04,294.50 C115.74,293.49 114.99,293.04 111.96,292.08 C94.11,286.44 77.16,277.04 65.57,266.35 C59.16,260.43 52.98,252.96 46.63,243.47 C41.60,235.94 40.60,234.11 37.29,226.25 C36.01,223.22 34.76,220.30 34.50,219.75 C34.25,219.20 33.56,217.18 32.98,215.25 C32.39,213.32 31.58,210.85 31.16,209.75 C29.33,204.95 26.76,191.07 25.57,179.50 C24.74,171.53 25.20,155.26 26.46,147.50 C27.06,143.79 27.76,139.29 28.01,137.50 C28.68,132.75 29.14,130.88 31.22,124.50 C33.47,117.62 34.47,114.92 37.37,108.00 C42.34,96.16 45.42,90.81 54.51,78.25 C58.77,72.37 67.83,62.84 73.75,58.04 C75.95,56.25 79.12,53.63 80.81,52.21 C82.49,50.79 85.29,48.79 87.04,47.76 C88.79,46.74 90.82,45.40 91.56,44.78 C92.29,44.16 97.02,41.62 102.07,39.12 C114.03,33.21 129.19,28.04 139.00,26.52 C141.06,26.20 143.99,25.72 145.50,25.45 C150.02,24.64 162.38,24.15 168.00,24.56 C175.88,25.14 179.07,25.71 194.50,29.28 C201.04,30.79 214.96,36.01 220.00,38.85 C220.96,39.39 223.55,40.80 225.75,41.99 C227.95,43.17 229.97,44.29 230.25,44.48 C231.07,45.04 234.77,46.00 236.12,46.00 C236.81,46.00 237.63,46.31 237.95,46.69 C238.53,47.39 238.62,55.18 238.38,83.75 C238.32,91.17 238.47,101.38 238.71,106.42 L239.16,115.59 L238.01,115.42 C236.43,115.19 235.91,113.96 234.47,107.00 C233.53,102.43 231.71,95.39 229.95,89.50 C228.08,83.23 223.23,73.12 219.76,68.25 C214.90,61.44 210.15,55.96 204.90,51.09 C198.78,45.41 195.76,43.20 189.75,40.03 C187.55,38.87 185.53,37.74 185.25,37.52 C184.51,36.94 175.74,34.07 170.75,32.77 C164.65,31.19 160.96,30.79 153.00,30.85 C144.30,30.92 142.47,31.20 133.00,33.95 C127.34,35.60 120.90,38.57 114.50,42.50 C109.59,45.51 101.63,51.91 98.25,55.56 C89.85,64.64 81.70,76.72 76.88,87.25 C73.25,95.17 71.90,98.89 69.70,107.00 C68.77,110.44 67.67,114.38 67.26,115.75 C66.84,117.12 66.26,119.49 65.95,121.00 C65.65,122.51 65.20,124.65 64.96,125.75 C62.62,136.26 61.76,146.15 61.82,161.75 C61.86,174.68 62.24,179.47 64.02,189.50 C64.24,190.74 64.63,193.10 64.90,194.75 C65.98,201.36 70.09,216.24 72.17,221.02 C72.58,221.97 73.39,223.82 73.96,225.12 C74.53,226.42 75.00,227.60 75.00,227.73 C75.00,228.08 77.31,233.15 82.62,244.50 C85.54,250.73 94.55,260.92 104.25,268.95 C109.61,273.39 113.20,275.75 113.92,275.30 C114.16,275.15 114.52,272.15 114.71,268.64 C114.90,265.12 115.26,261.01 115.50,259.50 C117.81,245.49 117.66,246.05 123.09,232.16 C124.19,229.35 125.69,226.09 126.44,224.91 C127.18,223.72 128.96,220.61 130.40,218.00 C133.92,211.62 137.35,207.07 142.34,202.17 C148.34,196.28 154.83,191.58 162.25,187.73 C170.48,183.47 174.70,181.86 182.62,179.95 C183.66,179.70 185.46,179.27 186.62,178.98 C190.80,177.97 199.05,177.47 219.50,176.98 C245.28,176.36 251.68,175.98 261.50,174.47 C273.54,172.62 285.94,169.26 292.00,166.20 C293.79,165.30 297.16,163.65 299.50,162.54 C301.84,161.42 304.72,159.94 305.91,159.24 C309.87,156.92 318.70,150.85 322.95,147.53 C333.92,138.97 359.38,113.28 378.18,91.81 C380.62,89.03 383.09,86.30 383.68,85.75 C384.70,84.79 385.71,83.63 392.93,75.03 C397.77,69.27 404.98,58.26 407.06,53.46 C411.25,43.78 411.87,40.12 409.75,37.59 C408.36,35.94 405.20,34.31 402.39,33.80 C401.37,33.61 400.18,33.11 399.74,32.67 C399.02,31.95 399.03,31.80 399.83,30.91 C400.66,30.00 401.25,29.96 410.23,30.22 C440.89,31.11 443.06,31.10 452.70,30.03 C461.86,29.01 470.88,28.77 475.75,29.42 C477.81,29.69 478.25,29.93 478.25,30.75 C478.25,31.85 477.10,32.28 470.50,33.65 C465.61,34.67 457.78,37.11 454.26,38.72 C452.73,39.43 451.35,40.00 451.20,40.00 C450.24,40.00 438.22,46.48 435.53,48.45 C433.72,49.77 430.90,51.76 429.25,52.87 C425.63,55.30 415.93,63.56 409.75,69.46 C402.40,76.48 384.69,94.39 380.06,99.50 C377.70,102.11 374.29,105.72 372.50,107.52 C357.23,122.87 349.00,131.83 349.00,133.12 C349.00,134.30 351.74,138.83 359.62,150.67 C368.37,163.84 372.34,169.56 382.00,183.00 C393.27,198.68 395.15,201.34 399.34,207.61 C415.29,231.50 426.33,247.46 430.21,252.25 C433.34,256.11 455.09,277.67 457.57,279.38 C459.63,280.79 461.17,281.69 466.62,284.65 C470.27,286.64 475.45,287.97 480.01,288.12 C484.07,288.24 484.50,288.15 489.35,286.06 C492.99,284.49 494.79,283.96 495.71,284.20 C499.64,285.18 494.67,289.02 485.25,292.27 C481.95,293.41 478.46,294.68 477.50,295.09 C476.54,295.49 474.29,296.10 472.50,296.44 C470.71,296.77 468.02,297.29 466.51,297.58 C462.83,298.31 449.05,298.25 445.00,297.49 C440.61,296.67 435.76,295.04 430.50,292.62 C426.56,290.80 416.34,283.44 410.57,278.26 C408.88,276.73 402.23,268.28 397.88,262.11 C393.53,255.95 385.77,245.39 383.88,243.06 C382.84,241.79 380.16,238.05 377.91,234.75 C375.67,231.45 373.23,227.96 372.50,227.00 C369.73,223.36 360.62,210.47 355.89,203.50 C349.92,194.69 348.64,192.87 344.83,187.76 C343.19,185.57 340.28,181.41 338.37,178.51 C336.45,175.62 334.04,172.24 333.02,171.00 C332.00,169.76 329.97,166.95 328.51,164.75 C324.39,158.53 322.36,156.00 321.52,156.01 C320.81,156.01 318.88,157.43 310.67,163.98 C304.26,169.09 292.33,175.90 283.12,179.71 C281.41,180.42 278.68,181.56 277.06,182.25 C275.45,182.94 273.97,183.50 273.78,183.50 C273.59,183.50 272.27,184.03 270.84,184.68 C269.42,185.33 267.69,186.03 267.00,186.24 C264.69,186.94 258.95,189.99 256.99,191.57 C254.99,193.17 251.16,197.79 250.00,199.99 C249.03,201.83 248.48,204.26 247.98,209.00 C246.91,219.29 246.47,228.71 246.33,244.38 L246.19,261.17 L243.47,263.27 C241.14,265.06 228.73,273.87 221.50,278.86 C220.26,279.71 217.58,281.38 215.53,282.58 C213.48,283.77 211.01,285.26 210.03,285.88 C200.18,292.15 173.72,298.99 159.30,299.00 C154.16,299.00 140.53,298.08 137.25,297.51 C131.16,296.44 128.05,296.02 125.25,295.89 L122.25,295.75 L122.38,298.32 C122.60,302.46 124.96,310.22 128.01,316.84 C131.70,324.84 143.63,340.41 151.31,347.25 C159.50,354.54 160.86,355.55 170.50,361.48 C173.90,363.57 180.55,367.00 181.20,367.00 C181.35,367.00 182.66,367.53 184.11,368.18 C188.70,370.23 193.99,371.87 202.75,373.93 C214.13,376.61 218.77,377.11 233.10,377.19 C250.40,377.28 261.59,375.91 272.08,372.44 C287.34,367.37 297.72,362.49 308.00,355.54 C311.92,352.89 321.19,343.93 326.39,337.75 C328.48,335.27 331.40,332.01 332.88,330.50 C336.26,327.06 343.38,316.37 346.57,309.95 C347.91,307.27 349.00,304.95 349.00,304.80 C349.00,304.65 349.63,303.11 350.40,301.39 C351.17,299.66 352.06,297.12 352.37,295.75 C352.69,294.38 353.29,291.77 353.72,289.95 C357.24,275.17 356.41,259.50 351.56,248.81 C347.56,239.98 339.02,230.99 332.38,228.61 C331.07,228.15 330.00,227.59 330.00,227.38 C330.00,226.81 332.94,226.96 335.50,227.66 C339.33,228.70 342.51,230.61 346.36,234.20 C350.48,238.05 352.04,240.13 354.63,245.25 C358.16,252.24 359.31,255.28 361.60,263.75 C363.17,269.54 363.22,270.09 363.24,279.50 C363.25,291.50 362.49,296.57 359.25,306.00 C357.13,312.16 355.59,315.38 351.09,323.00 C347.58,328.95 345.47,331.83 338.87,339.72 C335.00,344.35 326.09,352.09 321.75,354.59 C319.82,355.70 316.45,357.78 314.25,359.21 C311.00,361.32 298.08,368.00 297.25,368.00 C297.13,368.00 295.84,368.54 294.39,369.20 C291.80,370.38 290.08,371.04 282.50,373.74 C280.44,374.47 278.30,375.28 277.75,375.54 C277.20,375.79 274.61,376.55 272.00,377.22 C269.39,377.89 266.01,378.75 264.50,379.14 C260.83,380.08 256.31,380.83 250.25,381.50 C247.50,381.81 243.74,382.27 241.90,382.53 C238.05,383.07 233.84,383.04 228.50,382.42 Z M244.20,294.81 C243.74,293.61 244.85,292.57 246.93,292.24 C254.02,291.11 260.82,288.54 263.93,285.79 C265.78,284.16 267.80,280.98 268.72,278.25 C271.08,271.32 271.46,265.78 272.78,220.25 C272.92,215.30 273.20,207.12 273.41,202.08 C273.74,193.76 273.87,192.83 274.76,192.18 C275.31,191.78 276.31,191.33 277.00,191.19 C281.04,190.31 291.78,185.28 299.09,180.83 C301.20,179.55 303.14,178.50 303.39,178.50 C303.66,178.50 304.00,189.18 304.21,204.12 C304.85,248.73 305.65,266.96 307.24,273.25 C308.99,280.19 312.83,285.88 317.12,287.88 C319.87,289.16 327.37,291.00 329.87,291.00 C332.34,291.00 333.65,291.93 333.42,293.53 C333.26,294.71 333.10,294.75 328.71,294.89 C326.21,294.97 317.77,294.59 309.96,294.04 C297.52,293.17 294.02,293.11 281.86,293.54 C274.23,293.81 267.40,294.25 266.69,294.52 C265.98,294.79 260.70,295.15 254.96,295.32 C245.58,295.59 244.48,295.54 244.20,294.81 Z M169.25,292.48 C175.55,291.88 178.89,291.26 183.50,289.87 C192.45,287.17 194.73,286.12 199.75,282.39 C205.65,278.00 208.48,274.74 211.14,269.32 C214.80,261.85 215.19,259.17 214.79,244.50 C214.10,219.47 213.59,207.70 213.14,205.75 C211.84,200.20 208.71,195.71 204.82,193.81 C195.29,189.15 184.48,188.93 169.00,193.08 C164.88,194.18 157.34,197.98 152.90,201.19 C147.83,204.85 141.61,210.43 139.40,213.30 C138.22,214.84 136.09,217.58 134.66,219.39 C133.24,221.19 131.78,223.25 131.42,223.96 C131.06,224.67 130.14,226.33 129.38,227.65 C128.62,228.97 128.00,230.25 128.00,230.51 C128.00,230.77 127.35,232.39 126.56,234.12 C124.81,237.95 123.58,241.50 122.97,244.50 C122.72,245.74 121.95,249.34 121.25,252.50 C120.22,257.16 119.92,260.19 119.67,268.54 L119.36,278.83 L120.53,279.92 C121.17,280.52 124.18,282.22 127.22,283.70 C138.87,289.39 139.66,289.66 151.75,292.24 C155.57,293.06 162.24,293.15 169.25,292.48 Z M273.35,163.62 C273.24,163.42 273.31,157.06 273.53,149.50 C273.93,134.98 273.33,97.62 272.49,85.66 C272.22,81.75 272.00,75.02 272.00,70.69 C272.00,66.36 271.78,60.89 271.52,58.53 C271.25,56.18 270.78,51.78 270.46,48.76 C270.14,45.74 269.65,42.70 269.37,42.01 C267.88,38.32 267.33,37.42 265.86,36.33 C263.35,34.47 261.27,34.00 255.53,34.00 C250.25,34.00 249.00,33.65 249.00,32.16 C249.00,31.81 249.73,31.15 250.62,30.69 C252.04,29.95 253.44,29.90 262.49,30.20 C268.13,30.39 275.00,30.77 277.75,31.03 C284.14,31.65 302.18,31.12 309.00,30.12 C314.72,29.27 324.99,28.76 326.84,29.23 C327.48,29.39 328.00,29.85 328.00,30.25 C328.00,31.34 326.01,32.43 322.97,33.00 C321.47,33.28 318.79,34.23 317.00,35.13 C314.31,36.47 313.48,37.20 312.20,39.35 C310.47,42.26 309.25,46.66 308.52,52.68 C307.68,59.54 306.42,73.85 305.96,81.75 C305.73,85.88 305.40,89.76 305.25,90.39 C304.63,92.94 303.67,124.55 303.88,135.75 L304.10,147.75 L302.67,149.03 C301.89,149.74 299.68,151.29 297.75,152.48 C295.82,153.68 292.79,155.59 291.00,156.73 C287.87,158.72 283.42,161.00 282.63,161.00 C282.42,161.00 280.56,161.67 278.50,162.48 C274.55,164.05 273.69,164.24 273.35,163.62 Z";
 
+
 const GROW=0.95, FORM=0.70;
 const parts=DATA.pieces.map(function(p){
   const el=document.createElementNS(NS,'path'); svg.appendChild(el);
@@ -51,6 +154,11 @@ function d_of(pts){
   for(let i=1;i<pts.length;i++) s+='L'+pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1);
   return s+'Z';
 }
+
+let exactPath = null;
+let logoReady = false;
+let transitioning = false;
+
 function finish(){
   // Soft cross-fade from the settled polylines into the original
   // single Bezier path so the logo ends perfectly crisp with no pop.
@@ -60,20 +168,148 @@ function finish(){
   g.setAttribute('fill-rule', 'evenodd');
   g.style.opacity = '0';
   svg.appendChild(g);
+  exactPath = g;
 
-  // force style application then fade the exact path in
   g.getBoundingClientRect();
   requestAnimationFrame(() => {
     g.style.opacity = '1';
-    parts.forEach(p => {
-      p.el.style.opacity = '0';
-    });
+    parts.forEach(p => { p.el.style.opacity = '0'; });
   });
 
-  // clean up the temporary pieces after the transition
   setTimeout(() => {
     parts.forEach(p => p.el.remove());
+    logoReady = true;
+    document.getElementById('hint').classList.add('show');
+    // enable click
+    document.addEventListener('click', startTransition, { once: true });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') startTransition();
+    }, { once: true });
   }, 500);
+}
+
+function samplePath(pathEl, count){
+  const len = pathEl.getTotalLength();
+  const pts = [];
+  for (let i = 0; i < count; i++) {
+    const t = i / (count - 1);
+    const p = pathEl.getPointAtLength(t * len);
+    pts.push({ x: p.x, y: p.y, t });
+  }
+  return pts;
+}
+
+function startTransition(){
+  if (!logoReady || transitioning || !exactPath) return;
+  transitioning = true;
+  document.getElementById('hint').classList.remove('show');
+
+  // short intentional pause
+  setTimeout(() => {
+    dissolveLogo();
+  }, 160);
+}
+
+function dissolveLogo(){
+  const N = 180; // number of fine stroke particles
+  const samples = samplePath(exactPath, N);
+  const particles = [];
+  const vb = svg.viewBox.baseVal;
+  const cx = vb.x + vb.width / 2;
+  const cy = vb.y + vb.height / 2;
+
+  // create short line segments along the path
+  for (let i = 0; i < samples.length - 1; i++) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const el = document.createElementNS(NS, 'path');
+    el.setAttribute('class', 'particle');
+    el.setAttribute('d', `M${a.x.toFixed(2)},${a.y.toFixed(2)} L${b.x.toFixed(2)},${b.y.toFixed(2)}`);
+    el.setAttribute('stroke-width', '1.0');
+    el.style.opacity = '1';
+    svg.appendChild(el);
+
+    // organic outward velocity – mostly radial + slight tangential drift
+    const dx = (a.x + b.x) / 2 - cx;
+    const dy = (a.y + b.y) / 2 - cy;
+    const dist = Math.hypot(dx, dy) || 1;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    // small random variation for organic feel, still controlled
+    const spread = 38 + Math.random() * 55;
+    const angleJitter = (Math.random() - 0.5) * 0.9;
+    const cos = Math.cos(angleJitter);
+    const sin = Math.sin(angleJitter);
+    const vx = (nx * cos - ny * sin) * spread;
+    const vy = (nx * sin + ny * cos) * spread;
+
+    particles.push({
+      el,
+      x0: a.x, y0: a.y,
+      x1: b.x, y1: b.y,
+      vx, vy,
+      delay: Math.random() * 0.18,
+      life: 0.75 + Math.random() * 0.35
+    });
+  }
+
+  // fade the solid logo quickly
+  exactPath.style.transition = 'opacity 0.55s ease-out';
+  exactPath.style.opacity = '0';
+
+  // start content reveal slightly overlapping the dissolve
+  setTimeout(() => {
+    document.getElementById('site').classList.add('visible');
+    document.querySelector('.name').classList.add('show');
+    setTimeout(() => document.querySelector('.role').classList.add('show'), 120);
+    setTimeout(() => document.querySelector('.projects').classList.add('show'), 220);
+  }, 280);
+
+  const t0 = performance.now();
+  const DURATION = 1.05;
+
+  function frame(now) {
+    const t = (now - t0) / 1000;
+    let alive = false;
+
+    for (const p of particles) {
+      const local = t - p.delay;
+      if (local < 0) { alive = true; continue; }
+      const u = c01(local / p.life);
+      const e = ease(u);
+
+      // move outward while the segment shortens and thins
+      const mx = p.vx * e;
+      const my = p.vy * e;
+      const shrink = 1 - e * 0.92;
+      const midX = (p.x0 + p.x1) / 2;
+      const midY = (p.y0 + p.y1) / 2;
+      const dx = (p.x1 - p.x0) * 0.5 * shrink;
+      const dy = (p.y1 - p.y0) * 0.5 * shrink;
+
+      const xA = midX - dx + mx;
+      const yA = midY - dy + my;
+      const xB = midX + dx + mx;
+      const yB = midY + dy + my;
+
+      p.el.setAttribute('d', `M${xA.toFixed(2)},${yA.toFixed(2)} L${xB.toFixed(2)},${yB.toFixed(2)}`);
+      p.el.setAttribute('stroke-width', (1.0 * (1 - e * 0.95)).toFixed(3));
+      p.el.style.opacity = (1 - e).toFixed(3);
+
+      if (u < 1) alive = true;
+    }
+
+    if (alive && t < DURATION + 0.4) {
+      requestAnimationFrame(frame);
+    } else {
+      // clean up particles and the exact path
+      particles.forEach(p => p.el.remove());
+      if (exactPath && exactPath.parentNode) exactPath.remove();
+      // allow scrolling / normal page behaviour
+      document.body.style.overflow = 'auto';
+    }
+  }
+  requestAnimationFrame(frame);
 }
 
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -83,7 +319,10 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
   g.setAttribute('fill-rule', 'evenodd');
   g.style.opacity = '1';
   svg.appendChild(g);
-  parts.forEach(p => p.el.remove());
+  exactPath = g;
+  logoReady = true;
+  document.getElementById('hint').classList.add('show');
+  document.addEventListener('click', startTransition, { once: true });
 } else {
   const t0 = performance.now();
   const buf = parts.map(p => p.final.map(() => [0, 0]));
@@ -96,7 +335,6 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     const t = (now - t0) / 1000;
     let done = true;
 
-    // gently remove the seam-hiding stroke after geometry has settled
     const strokeT = c01((t - (LAST_FORM_END - STROKE_FADE)) / STROKE_FADE);
     const sw = 1.1 * (1 - ease(strokeT));
 
@@ -111,11 +349,9 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       if (f < 1) done = false;
       const eg = ease(g), ef = ease(f), out = buf[pi];
       for (let i = 0; i < p.n; i++) {
-        // tip-first growth along the vine
         const gp = ease(c01((eg - p.u[i] * 0.82) / 0.18));
         const sx = p.seed[0] + (p.flat[i][0] - p.seed[0]) * gp;
         const sy = p.seed[1] + (p.flat[i][1] - p.seed[1]) * gp;
-        // the organic line then resolves into exact logo geometry
         out[i][0] = sx + (p.final[i][0] - sx) * ef;
         out[i][1] = sy + (p.final[i][1] - sy) * ef;
       }
@@ -125,7 +361,6 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
       else p.el.setAttribute('stroke', '#000');
     }
 
-    // once geometry is final and stroke has thinned, cross-fade to the crisp path
     if (done && strokeT >= 1) {
       finished = true;
       finish();
